@@ -1,0 +1,568 @@
+import 'package:flutter/material.dart';
+
+import '../../core/network/api_exception.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
+import '../../models/report.dart';
+import '../../models/rental.dart';
+import '../../state/app_scope.dart';
+import '../../widgets/caku_app_bar.dart';
+import '../../widgets/form_widgets.dart';
+import '../../widgets/layout.dart';
+import '../../widgets/rental_card.dart';
+import '../../widgets/state_views.dart';
+import '../../widgets/status_badge.dart';
+import '../rental_detail_screen.dart';
+import '../rentals_screen.dart';
+
+/// Dashboard admin dari `GET /reports/summary`.
+class AdminDashboardScreen extends StatefulWidget {
+  const AdminDashboardScreen({super.key, this.loadReport});
+
+  /// Sumber data opsional untuk pengujian; produksi memakai [ReportService].
+  final Future<ReportData> Function()? loadReport;
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  ReportData? _data;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _error = null;
+      if (_data == null) _loading = true;
+    });
+
+    try {
+      final data =
+          await (widget.loadReport?.call() ??
+              AppScope.read(context).reports.summary(limit: 5));
+      if (!mounted) return;
+      setState(() {
+        _data = data;
+        _loading = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.message;
+        _loading = false;
+      });
+    } catch (error) {
+      debugPrint('Dashboard error: $error');
+      if (!mounted) return;
+      setState(() {
+        _error = 'Terjadi kesalahan saat memuat ringkasan.';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _openRentals({RentalStatus? status}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => RentalsScreen(adminMode: true, initialStatus: status),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
+  Future<void> _openDetail(Rental rental) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => RentalDetailScreen(rentalId: rental.id),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const CakuAppBar(
+        title: 'Dashboard',
+        subtitle: 'Ringkasan operasional CAKU',
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading && _data == null) {
+      return const LoadingView(message: 'Memuat ringkasan...');
+    }
+
+    if (_error != null && _data == null) {
+      return ErrorView(message: _error!, onRetry: _load);
+    }
+
+    final summary = _data?.ringkasan ?? ReportSummary.empty;
+    final rentals = _data?.rentals ?? const <Rental>[];
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppColors.forest,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        children: [
+          ResponsiveFrame(
+            maxWidth: 960,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xxl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_error != null) ...[
+                  InlineNotice(
+                    message: _error!,
+                    icon: Icons.error_outline_rounded,
+                    tone: NoticeTone.error,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                _HeroCard(summary: summary),
+                const SizedBox(height: AppSpacing.lg),
+                _StatGrid(
+                  summary: summary,
+                  onOpen: (status) => _openRentals(status: status),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _StatusBreakdown(summary: summary),
+                const SizedBox(height: AppSpacing.lg),
+                _RevenueCard(summary: summary),
+                const SizedBox(height: AppSpacing.xl),
+                SectionHeader(
+                  title: 'Transaksi terbaru',
+                  subtitle: rentals.isEmpty
+                      ? 'Belum ada transaksi untuk ditampilkan'
+                      : '${rentals.length} transaksi terakhir',
+                  actionLabel: 'Lihat semua',
+                  onAction: () => _openRentals(),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                if (rentals.isEmpty)
+                  const EmptyView(
+                    compact: true,
+                    icon: Icons.receipt_long_rounded,
+                    title: 'Belum ada transaksi',
+                    message:
+                        'Pengajuan sewa dari customer akan muncul di sini '
+                        'untuk diverifikasi.',
+                  )
+                else
+                  for (final rental in rentals) ...[
+                    RentalCard(
+                      key: ValueKey(rental.id),
+                      rental: rental,
+                      showCustomer: true,
+                      onTap: () => _openDetail(rental),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({required this.summary});
+
+  final ReportSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.forest, AppColors.forestDeep],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -30,
+            top: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                color: AppColors.cream.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Total pendapatan',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.cream.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                Formatters.rupiah(summary.totalPendapatan),
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textOnDark,
+                  height: 1.15,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _HeroChip(
+                    icon: Icons.receipt_long_rounded,
+                    label: '${summary.totalTransaksi} transaksi',
+                  ),
+                  _HeroChip(
+                    icon: Icons.hourglass_top_rounded,
+                    label: '${summary.pending} menunggu',
+                  ),
+                  _HeroChip(
+                    icon: Icons.backpack_outlined,
+                    label: '${summary.ongoing} berjalan',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs + 2,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.cream.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.cream),
+          const SizedBox(width: AppSpacing.xs + 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.cream,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatData {
+  const _StatData({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.foreground,
+    required this.background,
+    this.status,
+  });
+
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color foreground;
+  final Color background;
+  final RentalStatus? status;
+}
+
+class _StatGrid extends StatelessWidget {
+  const _StatGrid({required this.summary, required this.onOpen});
+
+  final ReportSummary summary;
+  final ValueChanged<RentalStatus?> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final tiles = [
+      _StatData(
+        label: 'Menunggu',
+        value: summary.pending,
+        icon: Icons.hourglass_top_rounded,
+        foreground: AppColors.warning,
+        background: AppColors.warningSurface,
+        status: RentalStatus.pending,
+      ),
+      _StatData(
+        label: 'Disetujui',
+        value: summary.approved,
+        icon: Icons.verified_outlined,
+        foreground: AppColors.info,
+        background: AppColors.infoSurface,
+        status: RentalStatus.approved,
+      ),
+      _StatData(
+        label: 'Berjalan',
+        value: summary.ongoing,
+        icon: Icons.backpack_outlined,
+        foreground: AppColors.forest,
+        background: AppColors.forestSurface,
+        status: RentalStatus.ongoing,
+      ),
+      _StatData(
+        label: 'Selesai',
+        value: summary.completed,
+        icon: Icons.task_alt_rounded,
+        foreground: AppColors.success,
+        background: AppColors.successSurface,
+        status: RentalStatus.completed,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 4 : 2;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: tiles.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisExtent: 118,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisSpacing: AppSpacing.md,
+          ),
+          itemBuilder: (context, index) {
+            final tile = tiles[index];
+            return _StatTile(data: tile, onTap: () => onOpen(tile.status));
+          },
+        );
+      },
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.data, required this.onTap});
+
+  final _StatData data;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: data.background,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Icon(data.icon, size: 18, color: data.foreground),
+                  ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: AppColors.gray,
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                '${data.value}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  height: 1.1,
+                ),
+              ),
+              Text(data.label, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBreakdown extends StatelessWidget {
+  const _StatusBreakdown({required this.summary});
+
+  final ReportSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = [
+      (RentalStatus.pending, summary.pending),
+      (RentalStatus.approved, summary.approved),
+      (RentalStatus.ongoing, summary.ongoing),
+      (RentalStatus.completed, summary.completed),
+      (RentalStatus.rejected, summary.rejected),
+    ];
+
+    return SummaryCard(
+      title: 'Status transaksi',
+      children: [
+        for (final row in rows) ...[
+          _StatusRow(
+            status: row.$1,
+            count: row.$2,
+            total: summary.totalTransaksi,
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
+    required this.status,
+    required this.count,
+    required this.total,
+  });
+
+  final RentalStatus status;
+  final int count;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final (track, accent) = _toneFor(status);
+    final ratio = total == 0 ? 0.0 : (count / total).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            StatusBadge(status: status, dense: true),
+            const Spacer(),
+            Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs + 2),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: LinearProgressIndicator(
+            value: ratio,
+            minHeight: 6,
+            color: accent,
+            backgroundColor: track,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RevenueCard extends StatelessWidget {
+  const _RevenueCard({required this.summary});
+
+  final ReportSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return SummaryCard(
+      title: 'Ringkasan pendapatan',
+      children: [
+        InfoRow(
+          label: 'Total sewa',
+          value: Formatters.rupiah(summary.totalSewa),
+        ),
+        InfoRow(
+          label: 'Total denda',
+          value: Formatters.rupiah(summary.totalDenda),
+        ),
+        const Divider(height: AppSpacing.lg),
+        InfoRow(
+          label: 'Total pendapatan',
+          value: Formatters.rupiah(summary.totalPendapatan),
+          emphasize: true,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Pendapatan mencakup transaksi disetujui, berjalan, dan selesai. '
+          'Denda hanya dihitung dari transaksi selesai.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+(Color, Color) _toneFor(RentalStatus status) {
+  return switch (status) {
+    RentalStatus.pending => (AppColors.warningSurface, AppColors.warning),
+    RentalStatus.approved => (AppColors.infoSurface, AppColors.info),
+    RentalStatus.ongoing => (AppColors.forestSurface, AppColors.forest),
+    RentalStatus.completed => (AppColors.successSurface, AppColors.success),
+    RentalStatus.rejected => (AppColors.errorSurface, AppColors.error),
+  };
+}
