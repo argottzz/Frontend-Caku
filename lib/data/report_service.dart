@@ -31,6 +31,7 @@ class ReportService {
       rentals: Json.asMapList(
         data['rentals'],
       ).map(Rental.fromJson).toList(growable: false),
+      pagination: response.pagination,
     );
   }
 
