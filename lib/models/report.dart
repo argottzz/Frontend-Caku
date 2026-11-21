@@ -1,3 +1,4 @@
+import '../core/network/api_client.dart';
 import 'json_utils.dart';
 import 'rental.dart';
 
@@ -53,10 +54,15 @@ class ReportSummary {
 }
 
 class ReportData {
-  const ReportData({required this.ringkasan, this.rentals = const []});
+  const ReportData({
+    required this.ringkasan,
+    this.rentals = const [],
+    this.pagination,
+  });
 
   final ReportSummary ringkasan;
   final List<Rental> rentals;
+  final Pagination? pagination;
 
   factory ReportData.fromJson(Map<String, dynamic> json) {
     return ReportData(
@@ -64,6 +70,9 @@ class ReportData {
       rentals: Json.asMapList(
         json['rentals'],
       ).map(Rental.fromJson).toList(growable: false),
+      pagination: json['pagination'] is Map<String, dynamic>
+          ? Pagination.fromJson(json['pagination'] as Map<String, dynamic>)
+          : null,
     );
   }
 }

@@ -10,6 +10,7 @@ import '../widgets/caku_app_bar.dart';
 import '../widgets/layout.dart';
 import '../widgets/rental_card.dart';
 import '../widgets/state_views.dart';
+import '../widgets/status_filter_bar.dart';
 import 'rental_detail_screen.dart';
 
 /// Daftar transaksi sewa. Customer melihat miliknya sendiri; mode admin
@@ -120,30 +121,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           children: [
-            SizedBox(
-              height: 48,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.xs,
-                ),
-                children: [
-                  _StatusPill(
-                    label: 'Semua',
-                    selected: _status == null,
-                    onTap: () => _selectStatus(null),
-                  ),
-                  ...RentalStatus.values.map(
-                    (status) => _StatusPill(
-                      label: status.label,
-                      selected: _status == status,
-                      onTap: () => _selectStatus(status),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            StatusFilterBar(selected: _status, onSelect: _selectStatus),
             ResponsiveFrame(
               maxWidth: 720,
               padding: const EdgeInsets.fromLTRB(
@@ -217,51 +195,6 @@ class _RentalsScreenState extends State<RentalsScreen> {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm),
-      child: Material(
-        color: selected ? AppColors.forest : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: selected ? AppColors.forest : AppColors.border,
-              ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.white : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
