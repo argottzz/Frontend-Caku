@@ -13,8 +13,6 @@ import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
-import '../profile_screen.dart';
-import '../rentals_screen.dart';
 import 'item_detail_screen.dart';
 import 'widgets/item_card.dart';
 
@@ -159,26 +157,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final cart = CartScope.of(context);
 
     return Scaffold(
-      appBar: CakuAppBar(
-        subtitle: 'Sewa perlengkapan camping',
-        actions: [
-          IconButton(
-            tooltip: 'Riwayat sewa',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const RentalsScreen()),
-            ),
-            icon: const Icon(Icons.receipt_long_rounded, size: 22),
-          ),
-          UserAvatar(
-            initials: user?.initials ?? 'C',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const ProfileScreen(showBack: true),
-              ),
-            ),
-          ),
-        ],
-      ),
+      appBar: CakuAppBar(subtitle: 'Sewa perlengkapan camping'),
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.forest,

@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/customer/catalog_screen.dart';
+import 'screens/customer/customer_shell.dart';
 import 'screens/session_landing.dart';
 import 'screens/splash_screen.dart';
 import 'state/app_scope.dart';
@@ -109,7 +109,7 @@ class _RootGateState extends State<RootGate> {
       AuthStatus.initializing => const SplashScreen(),
       AuthStatus.unauthenticated => const LoginScreen(),
       AuthStatus.authenticated =>
-        auth.isAdmin ? SessionLanding(user: auth.user!) : const CatalogScreen(),
+        auth.isAdmin ? SessionLanding(user: auth.user!) : const CustomerShell(),
     };
   }
 }
