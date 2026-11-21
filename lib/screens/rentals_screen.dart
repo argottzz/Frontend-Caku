@@ -15,9 +15,12 @@ import 'rental_detail_screen.dart';
 /// Daftar transaksi sewa. Customer melihat miliknya sendiri; mode admin
 /// menampilkan seluruh transaksi untuk diproses.
 class RentalsScreen extends StatefulWidget {
-  const RentalsScreen({super.key, this.adminMode = false});
+  const RentalsScreen({super.key, this.adminMode = false, this.initialStatus});
 
   final bool adminMode;
+
+  /// Filter status awal, dipakai saat dibuka dari kartu dashboard admin.
+  final RentalStatus? initialStatus;
 
   @override
   State<RentalsScreen> createState() => _RentalsScreenState();
@@ -37,6 +40,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
   @override
   void initState() {
     super.initState();
+    _status = widget.initialStatus;
     _load(reset: true);
   }
 
