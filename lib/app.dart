@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
@@ -46,6 +47,13 @@ class _CakuAppState extends State<CakuApp> {
             title: 'CAKU',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
+            locale: const Locale('id'),
+            supportedLocales: const [Locale('id'), Locale('en')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             home: FutureBuilder<void>(
               future: _bootstrap,
               builder: (context, snapshot) {
