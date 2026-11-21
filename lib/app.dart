@@ -1,8 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import 'core/config/api_config.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/customer/catalog_screen.dart';
@@ -30,9 +27,6 @@ class _CakuAppState extends State<CakuApp> {
   }
 
   Future<void> _prepare() async {
-    final api = widget.services.api;
-    final resolved = await ApiConfig.resolve();
-    api.baseUrl = resolved;
     await Future.wait([
       widget.services.auth.initialize(),
       // Menjaga splash tetap terlihat singkat agar tidak berkedip.
