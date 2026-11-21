@@ -25,7 +25,7 @@ class AppServices {
     final storage = TokenStorage();
     late final AuthController auth;
     final api = ApiClient(
-      baseUrl: ApiConfig.initialBaseUrl,
+      baseUrl: ApiConfig.baseUrl,
       onUnauthorized: () => auth.handleUnauthorized(),
     );
     auth = AuthController(client: api, storage: storage);

@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Hanya build debug yang mengizinkan HTTP lokal (mis. 10.0.2.2:8000).
+         Build release/profile tetap wajib HTTPS ke Railway. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

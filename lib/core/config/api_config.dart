@@ -1,52 +1,41 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
-/// Konfigurasi alamat backend CAKU.
+/// Konfigurasi alamat backend CAKU, satu sumber untuk seluruh aplikasi.
 ///
-/// Prioritas:
-/// 1. `--dart-define=API_URL=http://host:8000/api`
-/// 2. Web/desktop: `http://localhost:8000/api`
-/// 3. Android: probe `10.0.2.2` (emulator) lalu `127.0.0.1` (adb reverse).
+/// Prioritas penentuan base URL:
+/// 1. `--dart-define=API_BASE_URL=<origin>` (boleh dengan atau tanpa `/api`).
+/// 2. Build release/profile: Railway HTTPS, tidak pernah localhost.
+/// 3. Build debug tanpa define: backend lokal sesuai platform.
+///
+/// Awalan `/api` ditambahkan otomatis sehingga layar, widget, dan service tidak
+/// pernah menulis alamat backend sendiri.
 abstract final class ApiConfig {
-  static const String _override = String.fromEnvironment('API_URL');
+  static const String productionOrigin =
+      'https://backend-caku-production.up.railway.app';
 
-  static const String webBaseUrl = 'http://localhost:8000/api';
-  static const List<String> androidCandidates = [
-    'http://10.0.2.2:8000/api',
-    'http://127.0.0.1:8000/api',
-  ];
+  static const String _override = String.fromEnvironment('API_BASE_URL');
 
-  /// Base URL awal sebelum probe selesai.
-  static String get initialBaseUrl {
-    if (_override.isNotEmpty) return _override;
-    if (kIsWeb) return webBaseUrl;
-    return androidCandidates.first;
+  static const String _androidDebugOrigin = 'http://10.0.2.2:8000';
+  static const String _hostDebugOrigin = 'http://localhost:8000';
+
+  /// Base URL lengkap, termasuk akhiran `/api`.
+  static String get baseUrl {
+    final override = _override.trim();
+    if (override.isNotEmpty) return normalize(override);
+
+    if (!kDebugMode) return normalize(productionOrigin);
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return normalize(_androidDebugOrigin);
+    }
+
+    return normalize(_hostDebugOrigin);
   }
 
-  /// Menentukan base URL yang benar-benar dapat dijangkau.
-  ///
-  /// Endpoint `/categories` bersifat privat sehingga balasan `401` tetap
-  /// menandakan server hidup; yang diperiksa hanya keterjangkauan.
-  static Future<String> resolve() async {
-    if (_override.isNotEmpty) return _override;
-    if (kIsWeb) return webBaseUrl;
-
-    for (final candidate in androidCandidates) {
-      if (await _isReachable(candidate)) return candidate;
-    }
-    return androidCandidates.first;
-  }
-
-  static Future<bool> _isReachable(String baseUrl) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/categories'))
-          .timeout(const Duration(milliseconds: 1800));
-      return response.statusCode > 0;
-    } catch (_) {
-      return false;
-    }
+  /// Membuang garis miring di akhir lalu menambahkan `/api` bila belum ada.
+  static String normalize(String origin) {
+    final trimmed = origin.trim().replaceAll(RegExp(r'/+$'), '');
+    if (trimmed.endsWith('/api')) return trimmed;
+    return '$trimmed/api';
   }
 }
