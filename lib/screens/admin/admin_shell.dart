@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'dashboard_screen.dart';
 import 'items_screen.dart';
-import 'reports_screen.dart';
 import '../profile_screen.dart';
 import '../rentals_screen.dart';
 
-/// Kerangka navigasi utama admin: Dashboard, Barang, Sewa, Laporan, Profil.
+/// Kerangka navigasi utama admin: Dashboard, Barang, Transaksi, dan Profil.
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
 
@@ -31,7 +30,6 @@ class _AdminShellState extends State<AdminShell> {
           AdminDashboardScreen(),
           ItemsScreen(),
           RentalsScreen(adminMode: true),
-          ReportsScreen(),
           ProfileScreen(),
         ],
       ),
@@ -52,12 +50,7 @@ class _AdminShellState extends State<AdminShell> {
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Sewa',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart_rounded),
-            label: 'Laporan',
+            label: 'Transaksi',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
