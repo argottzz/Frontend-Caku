@@ -65,6 +65,19 @@ flutter:
 
   assets:
     - asset/caku-logo.jpg
+    - asset/onboarding-1.jpg
+    - asset/onboarding-2.jpg
+    - asset/onboarding-3.jpg
+
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: asset/fonts/plus-jakarta-sans-latin-400-normal.woff2
+          weight: 400
+        - asset: asset/fonts/plus-jakarta-sans-latin-600-normal.woff2
+          weight: 600
+        - asset: asset/fonts/plus-jakarta-sans-latin-700-normal.woff2
+          weight: 700
 
   # Foto produk disimpan di asset/ sebagai sumber unggahan admin dan tidak
   # dibundel ke aplikasi; gambar produk ditampilkan dari URL Cloudinary.
