@@ -10,7 +10,7 @@ class ResponsiveFrame extends StatelessWidget {
     required this.child,
     this.maxWidth = 560,
     this.padding = const EdgeInsets.symmetric(
-      horizontal: AppSpacing.lg,
+      horizontal: AppSpacing.screen,
       vertical: AppSpacing.lg,
     ),
     this.alignment = Alignment.topCenter,

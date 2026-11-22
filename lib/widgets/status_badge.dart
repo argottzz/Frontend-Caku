@@ -13,11 +13,11 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (background, foreground) = switch (status) {
-      RentalStatus.pending => (AppColors.warningSurface, AppColors.warning),
-      RentalStatus.approved => (AppColors.infoSurface, AppColors.info),
-      RentalStatus.ongoing => (AppColors.forestSurface, AppColors.forest),
-      RentalStatus.completed => (AppColors.successSurface, AppColors.success),
-      RentalStatus.rejected => (AppColors.errorSurface, AppColors.error),
+      RentalStatus.pending => (AppColors.pendingBg, AppColors.pendingText),
+      RentalStatus.approved => (AppColors.approvedBg, AppColors.approvedText),
+      RentalStatus.ongoing => (AppColors.ongoingBg, AppColors.ongoingText),
+      RentalStatus.completed => (AppColors.completedBg, AppColors.completedText),
+      RentalStatus.rejected => (AppColors.rejectedBg, AppColors.rejectedText),
     };
 
     return BadgePill(
@@ -26,11 +26,11 @@ class StatusBadge extends StatelessWidget {
       background: background,
       dense: dense,
       icon: switch (status) {
-        RentalStatus.pending => Icons.hourglass_top_rounded,
-        RentalStatus.approved => Icons.verified_rounded,
-        RentalStatus.ongoing => Icons.local_shipping_rounded,
-        RentalStatus.completed => Icons.check_circle_rounded,
-        RentalStatus.rejected => Icons.cancel_rounded,
+        RentalStatus.pending => Icons.schedule,
+        RentalStatus.approved => Icons.check_circle,
+        RentalStatus.ongoing => Icons.autorenew,
+        RentalStatus.completed => Icons.done_all,
+        RentalStatus.rejected => Icons.cancel,
       },
     );
   }
@@ -61,7 +61,7 @@ class BadgePill extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

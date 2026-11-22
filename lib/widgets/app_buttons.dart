@@ -23,14 +23,25 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = FilledButton(
       onPressed: loading ? null : onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.forest,
+        foregroundColor: AppColors.white,
+        disabledBackgroundColor: AppColors.disabledSurface,
+        disabledForegroundColor: AppColors.disabledText,
+        minimumSize: const Size(44, 50),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (loading) ...[
             const SizedBox(
-              width: 18,
-              height: 18,
+              width: 20,
+              height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2.2,
                 color: AppColors.white,
@@ -46,7 +57,9 @@ class PrimaryButton extends StatelessWidget {
       ),
     );
 
-    return expand ? SizedBox(width: double.infinity, child: button) : button;
+    return expand
+        ? SizedBox(width: double.infinity, height: 50, child: button)
+        : SizedBox(height: 50, child: button);
   }
 }
 
@@ -70,14 +83,24 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = OutlinedButton(
       onPressed: loading ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.forest,
+        disabledForegroundColor: AppColors.disabledText,
+        minimumSize: const Size(44, 50),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        side: const BorderSide(color: AppColors.forest, width: 1.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (loading) ...[
             const SizedBox(
-              width: 18,
-              height: 18,
+              width: 20,
+              height: 20,
               child: CircularProgressIndicator(strokeWidth: 2.2),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -90,6 +113,8 @@ class SecondaryButton extends StatelessWidget {
       ),
     );
 
-    return expand ? SizedBox(width: double.infinity, child: button) : button;
+    return expand
+        ? SizedBox(width: double.infinity, height: 50, child: button)
+        : SizedBox(height: 50, child: button);
   }
 }

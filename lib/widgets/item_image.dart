@@ -10,7 +10,7 @@ class ItemImage extends StatelessWidget {
     super.key,
     required this.imageUrl,
     this.fit = BoxFit.cover,
-    this.borderRadius = AppRadius.md,
+    this.borderRadius = AppRadius.lg,
     this.height,
     this.width,
   });
@@ -57,7 +57,7 @@ class BrandImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.cream,
+      color: AppColors.disabledSurface,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -66,7 +66,7 @@ class BrandImagePlaceholder extends StatelessWidget {
               loading
                   ? Icons.hourglass_empty_rounded
                   : Icons.landscape_outlined,
-              color: AppColors.forest,
+              color: AppColors.decorativeIcon,
               size: 28,
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -76,7 +76,7 @@ class BrandImagePlaceholder extends StatelessWidget {
                 fontSize: 11,
                 letterSpacing: 2,
                 fontWeight: FontWeight.w800,
-                color: AppColors.forest,
+                color: AppColors.decorativeIcon,
               ),
             ),
           ],

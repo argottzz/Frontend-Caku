@@ -41,7 +41,7 @@ class ItemCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AspectRatio(
-                aspectRatio: 1.12,
+                aspectRatio: 4 / 3,
                 child: ItemImage(imageUrl: item.imageUrl),
               ),
               Expanded(
@@ -121,8 +121,8 @@ class ItemCard extends StatelessWidget {
                                   AppRadius.sm,
                                 ),
                                 child: SizedBox(
-                                  width: 34,
-                                  height: 34,
+                                  width: 44,
+                                  height: 44,
                                   child: Icon(
                                     Icons.add_rounded,
                                     size: 20,
