@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/admin/admin_shell.dart';
 import 'screens/customer/customer_shell.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/splash_screen.dart';
 import 'state/app_scope.dart';
 import 'state/auth_controller.dart';
@@ -80,10 +81,12 @@ class RootGate extends StatefulWidget {
 
 class _RootGateState extends State<RootGate> {
   AuthStatus? _lastStatus;
+  Future<bool>? _onboardingFuture;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _onboardingFuture ??= AppScope.read(context).storage.readOnboardingSeen();
     final auth = AuthScope.of(context);
     if (_lastStatus != auth.status) {
       final previous = _lastStatus;
@@ -104,12 +107,27 @@ class _RootGateState extends State<RootGate> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = AuthScope.of(context);
-    return switch (auth.status) {
-      AuthStatus.initializing => const SplashScreen(),
-      AuthStatus.unauthenticated => const LoginScreen(),
-      AuthStatus.authenticated =>
-        auth.isAdmin ? const AdminShell() : const CustomerShell(),
-    };
+    final future = _onboardingFuture;
+    if (future == null) {
+      return const SplashScreen();
+    }
+    return FutureBuilder<bool>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SplashScreen();
+        }
+        if (snapshot.data != true) {
+          return const OnboardingScreen();
+        }
+        final auth = AuthScope.of(context);
+        return switch (auth.status) {
+          AuthStatus.initializing => const SplashScreen(),
+          AuthStatus.unauthenticated => const LoginScreen(),
+          AuthStatus.authenticated =>
+            auth.isAdmin ? const AdminShell() : const CustomerShell(),
+        };
+      },
+    );
   }
 }
