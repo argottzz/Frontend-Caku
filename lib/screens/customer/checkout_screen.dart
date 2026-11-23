@@ -19,10 +19,17 @@ import '../rental_detail_screen.dart';
 /// Pengajuan sewa: pilih periode, tinjau rincian, unggah bukti transfer, lalu
 /// kirim `POST /rentals` sebagai multipart.
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key, this.onRentalCreated});
+  const CheckoutScreen({
+    super.key,
+    this.onRentalCreated,
+    this.initialStart,
+    this.initialEnd,
+  });
 
   /// Dipanggil setelah pengajuan berhasil agar daftar sewa dapat dimuat ulang.
   final VoidCallback? onRentalCreated;
+  final DateTime? initialStart;
+  final DateTime? initialEnd;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -30,6 +37,13 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   static const int _maxDaysAhead = 366;
+
+  @override
+  void initState() {
+    super.initState();
+    _start = widget.initialStart;
+    _end = widget.initialEnd;
+  }
 
   DateTime? _start;
   DateTime? _end;
@@ -195,8 +209,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       appBar: CakuAppBar(
-        title: 'Pengajuan sewa',
-        subtitle: 'Atur jadwal dan unggah bukti transfer',
+        title: 'Checkout',
+        subtitle: 'Info penyewa, periode, dan pembayaran',
         showBack: true,
       ),
       body: ListView(
@@ -222,10 +236,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: AppSpacing.lg),
                 ],
                 SummaryCard(
-                  title: 'Periode sewa',
+                  title: 'Info Penyewa & Periode',
                   children: [
+                    InfoRow(
+                      label: 'Nama',
+                      value: AuthScope.maybeOf(context)?.user?.nama ?? '-',
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     _DateField(
-                      label: 'Tanggal mulai',
+                      label: 'Tanggal Mulai',
                       value: _start,
                       placeholder: 'Pilih tanggal mulai',
                       error: _startError,
@@ -240,6 +259,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       onTap: _pickEnd,
                     ),
                     const SizedBox(height: AppSpacing.md),
+                    InfoRow(
+                      label: 'Durasi',
+                      value: _days > 0 ? '$_days hari' : 'Belum dipilih',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
                     InlineNotice(
                       message: _days > 0
                           ? 'Durasi sewa $_days hari, termasuk tanggal mulai '
@@ -252,7 +276,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SummaryCard(
-                  title: 'Barang disewa',
+                  title: 'Ringkasan Barang',
                   children: [
                     if (lines.isEmpty)
                       Text(
@@ -303,7 +327,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SummaryCard(
-                  title: 'Rincian biaya',
+                  title: 'Total Pembayaran',
                   children: [
                     InfoRow(
                       label: 'Total per hari',
@@ -414,7 +438,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(width: AppSpacing.md),
               PrimaryButton(
-                label: 'Ajukan sewa',
+                label: 'Buat Pesanan',
                 icon: Icons.send_rounded,
                 expand: false,
                 loading: _submitting,

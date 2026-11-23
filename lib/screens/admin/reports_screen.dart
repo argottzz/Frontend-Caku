@@ -203,7 +203,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     return Scaffold(
       appBar: const CakuAppBar(
-        title: 'Laporan',
+        title: 'Laporan Pendapatan',
         subtitle: 'Rekap transaksi dan pendapatan',
       ),
       body: RefreshIndicator(

@@ -109,7 +109,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CakuAppBar(
-        title: widget.adminMode ? 'Kelola penyewaan' : 'Riwayat sewa',
+        title: widget.adminMode ? 'Manajemen Transaksi' : 'Sewa Saya',
         subtitle: widget.adminMode
             ? 'Verifikasi dan proses pesanan'
             : 'Pantau status pengajuan Anda',

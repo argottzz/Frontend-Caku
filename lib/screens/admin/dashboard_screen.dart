@@ -12,9 +12,12 @@ import '../../widgets/form_widgets.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
-import '../../widgets/status_badge.dart';
+
+import '../admin_applications_screen.dart';
+import 'item_form_screen.dart' show ItemFormScreen;
 import '../rental_detail_screen.dart';
 import '../rentals_screen.dart';
+import 'reports_screen.dart';
 
 /// Dashboard admin dari `GET /reports/summary`.
 class AdminDashboardScreen extends StatefulWidget {
@@ -31,6 +34,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   ReportData? _data;
   bool _loading = true;
   String? _error;
+  int _totalItems = 0;
 
   @override
   void initState() {
@@ -39,6 +43,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _load() async {
+    AppServices? services;
+    try {
+      services = AppScope.read(context);
+    } catch (_) {
+      services = null;
+    }
     setState(() {
       _error = null;
       if (_data == null) _loading = true;
@@ -47,10 +57,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     try {
       final data =
           await (widget.loadReport?.call() ??
-              AppScope.read(context).reports.summary(limit: 5));
+              (services != null
+                  ? services.reports.summary(limit: 5)
+                  : Future<ReportData>.value(
+                      ReportData(ringkasan: ReportSummary.empty),
+                    )));
+      int totalItems = 0;
+      if (services != null) {
+        try {
+          final page = await services.catalog.items(limit: 1);
+          totalItems = page.pagination?.total ?? page.items.length;
+        } catch (_) {}
+      }
       if (!mounted) return;
       setState(() {
         _data = data;
+        _totalItems = totalItems;
         _loading = false;
       });
     } on ApiException catch (error) {
@@ -143,7 +165,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onOpen: (status) => _openRentals(status: status),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                _StatusBreakdown(summary: summary),
+                _InventoryStrip(totalItems: _totalItems),
+                const SizedBox(height: AppSpacing.lg),
+                _QuickActions(
+                  onReports: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ReportsScreen(),
+                    ),
+                  ),
+                  onApplications: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminApplicationsScreen(),
+                    ),
+                  ),
+                  onAddItem: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ItemFormScreen(),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 _RevenueCard(summary: summary),
                 const SizedBox(height: AppSpacing.xl),
@@ -334,14 +374,6 @@ class _StatGrid extends StatelessWidget {
         status: RentalStatus.pending,
       ),
       _StatData(
-        label: 'Disetujui',
-        value: summary.approved,
-        icon: Icons.verified_outlined,
-        foreground: AppColors.info,
-        background: AppColors.infoSurface,
-        status: RentalStatus.approved,
-      ),
-      _StatData(
         label: 'Berjalan',
         value: summary.ongoing,
         icon: Icons.backpack_outlined,
@@ -357,6 +389,14 @@ class _StatGrid extends StatelessWidget {
         background: AppColors.successSurface,
         status: RentalStatus.completed,
       ),
+      _StatData(
+        label: 'Total Transaksi',
+        value: summary.totalTransaksi,
+        icon: Icons.receipt_long_rounded,
+        foreground: AppColors.info,
+        background: AppColors.infoSurface,
+        status: null,
+      ),
     ];
 
     return LayoutBuilder(
@@ -368,7 +408,7 @@ class _StatGrid extends StatelessWidget {
           itemCount: tiles.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisExtent: 118,
+            mainAxisExtent: 132,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
           ),
@@ -443,85 +483,6 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _StatusBreakdown extends StatelessWidget {
-  const _StatusBreakdown({required this.summary});
-
-  final ReportSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = [
-      (RentalStatus.pending, summary.pending),
-      (RentalStatus.approved, summary.approved),
-      (RentalStatus.ongoing, summary.ongoing),
-      (RentalStatus.completed, summary.completed),
-      (RentalStatus.rejected, summary.rejected),
-    ];
-
-    return SummaryCard(
-      title: 'Status transaksi',
-      children: [
-        for (final row in rows) ...[
-          _StatusRow(
-            status: row.$1,
-            count: row.$2,
-            total: summary.totalTransaksi,
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-      ],
-    );
-  }
-}
-
-class _StatusRow extends StatelessWidget {
-  const _StatusRow({
-    required this.status,
-    required this.count,
-    required this.total,
-  });
-
-  final RentalStatus status;
-  final int count;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final (track, accent) = _toneFor(status);
-    final ratio = total == 0 ? 0.0 : (count / total).clamp(0.0, 1.0);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            StatusBadge(status: status, dense: true),
-            const Spacer(),
-            Text(
-              '$count',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs + 2),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          child: LinearProgressIndicator(
-            value: ratio,
-            minHeight: 6,
-            color: accent,
-            backgroundColor: track,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _RevenueCard extends StatelessWidget {
   const _RevenueCard({required this.summary});
 
@@ -557,12 +518,140 @@ class _RevenueCard extends StatelessWidget {
   }
 }
 
-(Color, Color) _toneFor(RentalStatus status) {
-  return switch (status) {
-    RentalStatus.pending => (AppColors.warningSurface, AppColors.warning),
-    RentalStatus.approved => (AppColors.infoSurface, AppColors.info),
-    RentalStatus.ongoing => (AppColors.forestSurface, AppColors.forest),
-    RentalStatus.completed => (AppColors.successSurface, AppColors.success),
-    RentalStatus.rejected => (AppColors.errorSurface, AppColors.error),
-  };
+class _InventoryStrip extends StatelessWidget {
+  const _InventoryStrip({required this.totalItems});
+
+  final int totalItems;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.card),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.forestSurface,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                color: AppColors.forest,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Inventaris Barang',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  Text(
+                    '$totalItems',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({
+    required this.onReports,
+    required this.onApplications,
+    required this.onAddItem,
+  });
+
+  final VoidCallback onReports;
+  final VoidCallback onApplications;
+  final VoidCallback onAddItem;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickActionChip(
+            icon: Icons.bar_chart_rounded,
+            label: 'Laporan Pendapatan',
+            onTap: onReports,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: _QuickActionChip(
+            icon: Icons.assignment_ind_outlined,
+            label: 'Permohonan Admin',
+            onTap: onApplications,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: _QuickActionChip(
+            icon: Icons.add_rounded,
+            label: '+ Tambah Barang',
+            onTap: onAddItem,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickActionChip extends StatelessWidget {
+  const _QuickActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xs,
+            vertical: AppSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.forest, size: 18),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

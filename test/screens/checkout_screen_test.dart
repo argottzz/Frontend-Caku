@@ -37,11 +37,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Periode sewa'), findsOneWidget);
+    expect(find.text('Info Penyewa & Periode'), findsOneWidget);
     expect(find.text('Tenda Dome 4P'), findsOneWidget);
     expect(find.text('Rp 50.000'), findsWidgets);
 
-    await tester.tap(find.text('Ajukan sewa'));
+    await tester.tap(find.text('Buat Pesanan'));
     await tester.pump();
 
     expect(find.text('Pilih tanggal mulai sewa.'), findsOneWidget);

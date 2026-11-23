@@ -92,15 +92,21 @@ class UserAvatar extends StatelessWidget {
         customBorder: const CircleBorder(),
         child: Tooltip(
           message: 'Profil saya',
-          child: CircleAvatar(
-            radius: radius,
-            backgroundColor: AppColors.forest,
-            child: Text(
-              initials,
-              style: TextStyle(
-                color: AppColors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: radius * 0.72,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Center(
+              child: CircleAvatar(
+                radius: radius,
+                backgroundColor: AppColors.forest,
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: radius * 0.72,
+                  ),
+                ),
               ),
             ),
           ),
