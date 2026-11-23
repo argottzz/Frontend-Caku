@@ -19,8 +19,7 @@ Item sampleItem({int stock = 3}) {
 }
 
 void main() {
-  testWidgets('kartu barang menampilkan harga dan aksi tambah', (tester) async {
-    var added = 0;
+  testWidgets('kartu barang menampilkan harga dan kategori', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -31,7 +30,6 @@ void main() {
             child: ItemCard(
               item: sampleItem(),
               onTap: () {},
-              onAdd: () => added++,
             ),
           ),
         ),
@@ -41,15 +39,11 @@ void main() {
     expect(find.text('Tenda Dome 4P'), findsOneWidget);
     expect(find.text('Rp 50.000'), findsOneWidget);
     expect(find.text('Tenda dan Shelter'.toUpperCase()), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.add_rounded));
-    expect(added, 1);
   });
 
-  testWidgets('tombol tambah nonaktif saat stok sudah di keranjang', (
+  testWidgets('kartu barang menampilkan stok habis saat stok 0', (
     tester,
   ) async {
-    var added = 0;
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -58,17 +52,14 @@ void main() {
             width: 200,
             height: 300,
             child: ItemCard(
-              item: sampleItem(stock: 1),
-              quantityInCart: 1,
+              item: sampleItem(stock: 0),
               onTap: () {},
-              onAdd: () => added++,
             ),
           ),
         ),
       ),
     );
 
-    await tester.tap(find.byIcon(Icons.add_rounded));
-    expect(added, 0);
+    expect(find.text('Stok habis'), findsOneWidget);
   });
 }

@@ -38,9 +38,9 @@ void main() {
     );
 
     expect(find.text('Keranjang masih kosong'), findsOneWidget);
-    expect(find.text('Checkout'), findsNothing);
+    expect(find.text('Lanjutkan Checkout'), findsNothing);
 
-    await tester.tap(find.text('Jelajahi katalog'));
+    await tester.tap(find.text('Jelajahi Perlengkapan'));
     await tester.pump();
 
     expect(browsed, 1);
@@ -55,7 +55,7 @@ void main() {
     expect(find.text('Tenda Dome 4P'), findsOneWidget);
     expect(find.text('Rp 50.000'), findsWidgets);
     expect(find.text('Rp 50.000/hari'), findsOneWidget);
-    expect(find.text('Checkout'), findsOneWidget);
+    expect(find.text('Lanjutkan Checkout'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Tambah jumlah Tenda Dome 4P'));
     await tester.pump();
@@ -68,5 +68,18 @@ void main() {
 
     expect(cart.isEmpty, isTrue);
     expect(find.text('Keranjang masih kosong'), findsOneWidget);
+  });
+
+  testWidgets('keranjang tidak meluap pada layar sempit 320px', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final cart = CartController()..add(sampleItem());
+    await tester.pumpWidget(wrapCart(cart));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
   });
 }

@@ -182,7 +182,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
 
     return Scaffold(
       appBar: CakuAppBar(
-        title: _isEdit ? 'Ubah barang' : 'Tambah barang',
+        title: _isEdit ? 'Edit Barang' : 'Tambah Barang',
         subtitle: _isEdit ? item?.nama : 'Isi data perlengkapan baru',
         showBack: true,
       ),
@@ -222,6 +222,14 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                       tone: NoticeTone.error,
                     )
                   else ...[
+                    ImageSourceField(
+                      label: 'Foto barang',
+                      value: _image,
+                      existingUrl: item?.imageUrl,
+                      aspectRatio: 4 / 3,
+                      onChanged: (upload) => setState(() => _image = upload),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
                     DropdownButtonFormField<int>(
                       initialValue: _categoryId,
                       decoration: const InputDecoration(
@@ -274,38 +282,50 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                       },
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _hargaController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Harga sewa per hari',
-                        prefixText: 'Rp ',
-                      ),
-                      validator: (value) =>
-                          _validateMoney(value, allowZero: false),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _dendaController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Denda keterlambatan per hari',
-                        prefixText: 'Rp ',
-                      ),
-                      validator: (value) =>
-                          _validateMoney(value, allowZero: true),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    ImageSourceField(
-                      label: 'Foto barang',
-                      value: _image,
-                      existingUrl: item?.imageUrl,
-                      aspectRatio: 4 / 3,
-                      onChanged: (upload) => setState(() => _image = upload),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final twoColumns = constraints.maxWidth >= 390;
+                        final hargaField = TextFormField(
+                          controller: _hargaController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Harga sewa per hari',
+                            prefixText: 'Rp ',
+                          ),
+                          validator: (value) =>
+                              _validateMoney(value, allowZero: false),
+                        );
+                        final dendaField = TextFormField(
+                          controller: _dendaController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Denda per hari',
+                            prefixText: 'Rp ',
+                          ),
+                          validator: (value) =>
+                              _validateMoney(value, allowZero: true),
+                        );
+                        if (twoColumns) {
+                          return Row(
+                            children: [
+                              Expanded(child: hargaField),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(child: dendaField),
+                            ],
+                          );
+                        }
+                        return Column(
+                          children: [
+                            hargaField,
+                            const SizedBox(height: AppSpacing.md),
+                            dendaField,
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     PrimaryButton(

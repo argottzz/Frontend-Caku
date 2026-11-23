@@ -104,10 +104,10 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
   Future<void> _cancel() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Batalkan pengajuan?',
+      title: 'Hapus transaksi?',
       message:
-          'Pengajuan yang dibatalkan akan dihapus dan tidak dapat dikembalikan.',
-      confirmLabel: 'Batalkan pengajuan',
+          'Pengajuan yang dihapus tidak dapat dikembalikan.',
+      confirmLabel: 'Hapus',
       destructive: true,
     );
     if (!confirmed || !mounted) return;
@@ -203,8 +203,8 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     final isAdmin = AuthScope.of(context).isAdmin;
     return Scaffold(
       appBar: CakuAppBar(
-        title: 'Detail pesanan',
-        subtitle: _rental == null ? null : 'Pesanan #${_rental!.id}',
+        title: 'Detail Transaksi',
+        subtitle: _rental == null ? null : 'Transaksi #${_rental!.id}',
         showBack: true,
       ),
       body: _buildBody(isAdmin),
@@ -477,7 +477,7 @@ class _ActionBar extends StatelessWidget {
         case RentalStatus.pending:
           actions.addAll([
             Expanded(
-              child: SecondaryButton(
+              child: DangerButton(
                 label: 'Tolak',
                 onPressed: busy ? null : onReject,
               ),
@@ -524,9 +524,9 @@ class _ActionBar extends StatelessWidget {
     } else if (rental.canCancel) {
       actions.add(
         Expanded(
-          child: SecondaryButton(
-            label: 'Batalkan pengajuan',
-            icon: Icons.close_rounded,
+          child: DangerButton(
+            label: 'Hapus Transaksi',
+            icon: Icons.delete_outline_rounded,
             loading: busy,
             onPressed: onCancel,
           ),

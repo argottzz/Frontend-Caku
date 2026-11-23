@@ -15,6 +15,7 @@ import '../../widgets/confirm_dialog.dart';
 import '../../widgets/item_image.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
+import 'categories_screen.dart';
 import 'item_form_screen.dart';
 
 /// Daftar barang admin: cari, filter kategori, tambah, ubah, hapus.
@@ -216,6 +217,26 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Kategori & stok',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const CategoriesScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.category_outlined, size: 18),
+                        label: const Text('Kelola Kategori'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   if (_categories.isNotEmpty)
                     SizedBox(
                       height: 42,
@@ -376,7 +397,7 @@ class _AdminItemCard extends StatelessWidget {
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
-                    color: AppColors.orange,
+                    color: AppColors.accentText,
                   ),
                 ),
                 const SizedBox(height: 2),

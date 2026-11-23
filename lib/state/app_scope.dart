@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../core/config/api_config.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
+import '../data/admin_application_service.dart';
 import '../data/catalog_service.dart';
 import '../data/rental_service.dart';
 import '../data/report_service.dart';
@@ -19,6 +20,7 @@ class AppServices {
     required this.catalog,
     required this.rentals,
     required this.reports,
+    required this.adminApplications,
   });
 
   factory AppServices.create() {
@@ -38,6 +40,7 @@ class AppServices {
       catalog: CatalogService(api),
       rentals: RentalService(api),
       reports: ReportService(api),
+      adminApplications: AdminApplicationService(api),
     );
   }
 
@@ -48,6 +51,7 @@ class AppServices {
   final CatalogService catalog;
   final RentalService rentals;
   final ReportService reports;
+  final AdminApplicationService adminApplications;
 }
 
 /// Akses dependensi non-reaktif.
@@ -90,6 +94,11 @@ class AuthScope extends InheritedNotifier<AuthController> {
     final scope = context.getInheritedWidgetOfExactType<AuthScope>();
     assert(scope?.notifier != null, 'AuthScope tidak ditemukan.');
     return scope!.notifier!;
+  }
+
+  static AuthController? maybeOf(BuildContext context) {
+    final scope = context.getInheritedWidgetOfExactType<AuthScope>();
+    return scope?.notifier;
   }
 }
 

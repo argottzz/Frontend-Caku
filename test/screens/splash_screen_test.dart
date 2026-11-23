@@ -11,6 +11,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('CAKU'), findsOneWidget);
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

@@ -12,19 +12,13 @@ class ItemCard extends StatelessWidget {
     super.key,
     required this.item,
     required this.onTap,
-    required this.onAdd,
-    this.quantityInCart = 0,
   });
 
   final Item item;
   final VoidCallback onTap;
-  final VoidCallback onAdd;
-  final int quantityInCart;
 
   @override
   Widget build(BuildContext context) {
-    final canAdd = item.stok > quantityInCart;
-
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -63,7 +57,7 @@ class ItemCard extends StatelessWidget {
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.6,
-                          color: AppColors.orange,
+                          color: AppColors.accentText,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -81,61 +75,24 @@ class ItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  Formatters.rupiah(item.hargaSewaHarian),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.forest,
-                                  ),
-                                ),
-                                Text(
-                                  'per hari',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.bodySmall?.copyWith(fontSize: 10),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Tooltip(
-                            message: canAdd
-                                ? 'Tambah ${item.nama} ke keranjang'
-                                : 'Stok tidak mencukupi',
-                            child: Material(
-                              color: canAdd
-                                  ? AppColors.forest
-                                  : AppColors.lightGray,
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: InkWell(
-                                onTap: canAdd ? onAdd : null,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                child: SizedBox(
-                                  width: 44,
-                                  height: 44,
-                                  child: Icon(
-                                    Icons.add_rounded,
-                                    size: 20,
-                                    color: canAdd
-                                        ? AppColors.white
-                                        : AppColors.gray,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        Formatters.rupiah(item.hargaSewaHarian),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.forest,
+                        ),
                       ),
+                      Text(
+                        'per hari',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(fontSize: 10),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      CompactStockLine(stock: item.stok),
                     ],
                   ),
                 ),

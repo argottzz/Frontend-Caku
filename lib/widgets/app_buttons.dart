@@ -31,7 +31,7 @@ class PrimaryButton extends StatelessWidget {
         minimumSize: const Size(44, 50),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
       child: Row(
@@ -52,7 +52,14 @@ class PrimaryButton extends StatelessWidget {
             Icon(icon, size: 19),
             const SizedBox(width: AppSpacing.sm),
           ],
-          Text(label),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
@@ -90,7 +97,7 @@ class SecondaryButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         side: const BorderSide(color: AppColors.forest, width: 1.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
       child: Row(
@@ -108,7 +115,14 @@ class SecondaryButton extends StatelessWidget {
             Icon(icon, size: 19),
             const SizedBox(width: AppSpacing.sm),
           ],
-          Text(label),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
@@ -116,5 +130,68 @@ class SecondaryButton extends StatelessWidget {
     return expand
         ? SizedBox(width: double.infinity, height: 50, child: button)
         : SizedBox(height: 50, child: button);
+  }
+}
+
+class DangerButton extends StatelessWidget {
+  const DangerButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.loading = false,
+    this.expand = true,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool loading;
+  final bool expand;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = OutlinedButton(
+      onPressed: loading ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.error,
+        disabledForegroundColor: AppColors.disabledText,
+        minimumSize: const Size(44, 48),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        side: const BorderSide(color: AppColors.error, width: 1.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (loading) ...[
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2.2),
+            ),
+            const SizedBox(width: AppSpacing.md),
+          ] else if (icon != null) ...[
+            Icon(icon, size: 19),
+            const SizedBox(width: AppSpacing.sm),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return expand
+        ? SizedBox(width: double.infinity, height: 48, child: button)
+        : SizedBox(height: 48, child: button);
   }
 }

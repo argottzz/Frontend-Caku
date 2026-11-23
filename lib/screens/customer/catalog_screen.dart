@@ -5,19 +5,27 @@ import 'package:flutter/material.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/formatters.dart';
 import '../../models/category.dart';
 import '../../models/item.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
-import '../../widgets/caku_app_bar.dart';
-import '../../widgets/layout.dart';
+
 import '../../widgets/state_views.dart';
+import 'cart_screen.dart';
 import 'item_detail_screen.dart';
 import 'widgets/item_card.dart';
 
 class CatalogScreen extends StatefulWidget {
-  const CatalogScreen({super.key});
+  const CatalogScreen({
+    super.key,
+    this.autofocusSearch = false,
+    this.initialSearch,
+    this.initialCategoryId,
+  });
+
+  final bool autofocusSearch;
+  final String? initialSearch;
+  final int? initialCategoryId;
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -27,6 +35,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   static const int _pageSize = 10;
 
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
   Timer? _searchDebounce;
 
   List<Category> _categories = const [];
@@ -38,18 +47,29 @@ class _CatalogScreenState extends State<CatalogScreen> {
   int _page = 1;
   int _total = 0;
   bool _hasNext = false;
+  String _sort = 'default';
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearch != null) {
+      _searchController.text = widget.initialSearch!;
+    }
+    _categoryId = widget.initialCategoryId;
     _loadCategories();
     _loadItems(reset: true);
+    if (widget.autofocusSearch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _searchFocus.requestFocus();
+      });
+    }
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -130,17 +150,41 @@ class _CatalogScreenState extends State<CatalogScreen> {
     _loadItems(reset: true);
   }
 
-  void _addToCart(Item item) {
-    final cart = CartScope.read(context);
-    final added = cart.add(item);
-    if (added) {
-      AppSnack.success(context, '${item.nama} ditambahkan ke keranjang.');
-    } else {
-      AppSnack.info(
-        context,
-        'Jumlah di keranjang sudah mencapai stok tersedia.',
-      );
+  void _resetFilters() {
+    _searchController.clear();
+    _searchDebounce?.cancel();
+    setState(() {
+      _categoryId = null;
+      _sort = 'default';
+    });
+    _loadItems(reset: true);
+  }
+
+  List<Item> get _sortedItems {
+    final items = List<Item>.from(_items);
+    switch (_sort) {
+      case 'price_asc':
+        items.sort((a, b) => a.hargaSewaHarian.compareTo(b.hargaSewaHarian));
+        break;
+      case 'price_desc':
+        items.sort((a, b) => b.hargaSewaHarian.compareTo(a.hargaSewaHarian));
+        break;
+      case 'name_asc':
+        items.sort((a, b) => a.nama.compareTo(b.nama));
+        break;
+      case 'name_desc':
+        items.sort((a, b) => b.nama.compareTo(a.nama));
+        break;
+      default:
+        break;
     }
+    return items;
+  }
+
+  void _openCart() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const CartScreen()),
+    );
   }
 
   Future<void> _openDetail(Item item) async {
@@ -153,11 +197,15 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = AuthScope.of(context).user;
     final cart = CartScope.of(context);
 
     return Scaffold(
-      appBar: CakuAppBar(subtitle: 'Sewa perlengkapan camping'),
+      appBar: AppBar(
+        title: const Text('Jelajahi'),
+        actions: [
+          _CartBadgeButton(count: cart.totalQuantity, onTap: _openCart),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.forest,
@@ -165,35 +213,34 @@ class _CatalogScreenState extends State<CatalogScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: ResponsiveFrame(
-                maxWidth: 960,
+              child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
+                  AppSpacing.screen,
                   AppSpacing.md,
-                  AppSpacing.lg,
-                  0,
-                ),
-                child: _Header(
-                  name: user?.nama.split(' ').first ?? 'Sobat CAKU',
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: ResponsiveFrame(
-                maxWidth: 960,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
+                  AppSpacing.screen,
                   AppSpacing.sm,
                 ),
-                child: _SearchField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  onClear: () {
-                    _searchController.clear();
-                    _onSearchChanged('');
-                  },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _SearchField(
+                        controller: _searchController,
+                        focusNode: _searchFocus,
+                        onChanged: _onSearchChanged,
+                        onClear: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _SortDropdown(
+                      value: _sort,
+                      onChanged: (value) {
+                        setState(() => _sort = value);
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -207,51 +254,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: ResponsiveFrame(
-                maxWidth: 960,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                ),
-                child: SectionHeader(
-                  title: 'Katalog',
-                  subtitle: _loading
-                      ? 'Memuat perlengkapan...'
-                      : '$_total perlengkapan ditemukan',
-                ),
-              ),
-            ),
-            ..._buildContent(cart.quantityFor),
+            ..._buildContent(),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _buildContent(int Function(int itemId) quantityFor) {
+  List<Widget> _buildContent() {
     if (_loading) {
       return [
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.all(AppSpacing.screen),
           sliver: SliverToBoxAdapter(
-            child: ResponsiveFrame(
-              maxWidth: 960,
-              padding: EdgeInsets.zero,
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 4,
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 230,
-                  mainAxisExtent: 288,
-                  crossAxisSpacing: AppSpacing.md,
-                  mainAxisSpacing: AppSpacing.md,
-                ),
-                itemBuilder: (_, _) => const ItemCardSkeleton(),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: AppSpacing.md,
+                mainAxisSpacing: AppSpacing.md,
+                mainAxisExtent: 260,
               ),
+              itemBuilder: (_, _) => const ItemCardSkeleton(),
             ),
           ),
         ),
@@ -269,19 +295,17 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ];
     }
 
-    if (_items.isEmpty) {
+    final items = _sortedItems;
+
+    if (items.isEmpty) {
       return [
         SliverToBoxAdapter(
           child: EmptyView(
-            icon: Icons.terrain_rounded,
-            title: _searchController.text.isEmpty
-                ? 'Belum ada perlengkapan'
-                : 'Tidak ada hasil',
-            message: _searchController.text.isEmpty
-                ? 'Admin belum menambahkan barang untuk disewa. Coba muat ulang nanti.'
-                : 'Coba kata kunci lain atau ubah kategori yang dipilih.',
-            actionLabel: _searchController.text.isEmpty ? 'Muat ulang' : null,
-            onAction: _searchController.text.isEmpty ? _refresh : null,
+            icon: Icons.search_off_rounded,
+            title: 'Perlengkapan tidak ditemukan',
+            message: 'Coba ubah kata kunci atau kategori yang dipilih.',
+            actionLabel: 'Reset filter',
+            onAction: _resetFilters,
           ),
         ),
       ];
@@ -289,32 +313,26 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.screen),
         sliver: SliverToBoxAdapter(
-          child: ResponsiveFrame(
-            maxWidth: 960,
-            padding: EdgeInsets.zero,
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _items.length,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 230,
-                mainAxisExtent: 288,
-                crossAxisSpacing: AppSpacing.md,
-                mainAxisSpacing: AppSpacing.md,
-              ),
-              itemBuilder: (context, index) {
-                final item = _items[index];
-                return ItemCard(
-                  key: ValueKey(item.id),
-                  item: item,
-                  quantityInCart: quantityFor(item.id),
-                  onTap: () => _openDetail(item),
-                  onAdd: () => _addToCart(item),
-                );
-              },
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: AppSpacing.md,
+              mainAxisSpacing: AppSpacing.md,
+              mainAxisExtent: 260,
             ),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return ItemCard(
+                key: ValueKey(item.id),
+                item: item,
+                onTap: () => _openDetail(item),
+              );
+            },
           ),
         ),
       ),
@@ -354,89 +372,24 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: AppColors.forest,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.forest, AppColors.forestDeep],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -30,
-            top: -40,
-            child: Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                color: AppColors.cream.withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Halo, $name',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.cream.withValues(alpha: 0.85),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Siap berpetualang?\nLengkapi alat camping-mu.',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.textOnDark,
-                  fontSize: 22,
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Pilih perlengkapan, ajukan tanggal sewa, lalu unggah bukti transfer.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.cream.withValues(alpha: 0.82),
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SearchField extends StatelessWidget {
   const _SearchField({
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    this.focusNode,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
@@ -538,6 +491,83 @@ class _CategoryPill extends StatelessWidget {
   }
 }
 
-/// Helper kecil agar format harga konsisten di seluruh layar customer.
-String pricePerDay(Item item) =>
-    '${Formatters.rupiah(item.hargaSewaHarian)}/hari';
+class _SortDropdown extends StatelessWidget {
+  const _SortDropdown({required this.value, required this.onChanged});
+
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.controlBorder),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          icon: const Icon(Icons.sort_rounded, size: 18),
+          items: const [
+            DropdownMenuItem(value: 'default', child: Text('Urutkan')),
+            DropdownMenuItem(value: 'price_asc', child: Text('Harga termurah')),
+            DropdownMenuItem(value: 'price_desc', child: Text('Harga termahal')),
+            DropdownMenuItem(value: 'name_asc', child: Text('Nama A-Z')),
+            DropdownMenuItem(value: 'name_desc', child: Text('Nama Z-A')),
+          ],
+          onChanged: (value) {
+            if (value != null) onChanged(value);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _CartBadgeButton extends StatelessWidget {
+  const _CartBadgeButton({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IconButton(
+            onPressed: onTap,
+            icon: const Icon(Icons.shopping_cart_outlined),
+            tooltip: 'Keranjang',
+          ),
+          if (count > 0)
+            Positioned(
+              right: 4,
+              top: 4,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.orange,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: AppColors.textOnOrange,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

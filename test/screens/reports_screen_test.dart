@@ -38,7 +38,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Laporan'), findsOneWidget);
+    expect(find.text('Laporan Pendapatan'), findsOneWidget);
     expect(find.text('Ringkasan laporan'), findsOneWidget);
     expect(find.text('Rp 316.000'), findsOneWidget);
     expect(find.text('Tidak ada transaksi'), findsOneWidget);

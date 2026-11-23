@@ -12,7 +12,7 @@ class StatusFilterBar extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     this.padding = const EdgeInsets.symmetric(
-      horizontal: AppSpacing.lg,
+      horizontal: AppSpacing.screen,
       vertical: AppSpacing.xs,
     ),
     this.height = 48,
@@ -66,7 +66,7 @@ class _StatusPill extends StatelessWidget {
       padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: Material(
         color: selected ? AppColors.forest : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -74,7 +74,7 @@ class _StatusPill extends StatelessWidget {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               border: Border.all(
                 color: selected ? AppColors.forest : AppColors.border,
               ),

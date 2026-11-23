@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
-import '../core/theme/app_theme.dart';
 import '../widgets/caku_logo.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -40,59 +39,63 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fade,
           child: ScaleTransition(
             scale: _scale,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  CakuLogo(size: 168, showFrame: false),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    'CAKU',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: AppColors.forest,
-                      letterSpacing: 6,
-                      fontSize: 34,
-                    ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: AppColors.forestSurface,
+                          borderRadius: BorderRadius.circular(42),
+                        ),
+                        alignment: Alignment.center,
+                        child: const CakuLogo(size: 48, showFrame: false),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'CAKU',
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                              color: AppColors.forest,
+                              letterSpacing: -0.3,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Explore More, Worry Less.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Sewa perlengkapan camping,\nlebih mudah dan terpercaya.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.forestDeep,
-                      height: 1.6,
-                    ),
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: 120,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: const LinearProgressIndicator(
-                        minHeight: 3,
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 32,
+                  child: Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
                         color: AppColors.forest,
-                        backgroundColor: AppColors.lightGray,
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Text(
-                    'Penyewaan alat camping',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.forestDeep.withValues(alpha: 0.7),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

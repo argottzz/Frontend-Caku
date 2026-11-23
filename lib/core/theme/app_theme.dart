@@ -13,25 +13,26 @@ abstract final class AppSpacing {
   static const double xxl = 32;
   static const double xxxl = 48;
 
-  // Token khusus sesuai spesifikasi CAKU
-  static const double screen = 20; // padding horizontal layar
-  static const double section = 20; // jarak antar kelompok utama
-  static const double labelGap = 6; // jarak label ke input
-  static const double card = 16; // padding dalam card
-  static const double listItem = 12; // jarak antar kartu dalam daftar
-  static const double grid = 12; // jarak grid
-  static const double formField = 16; // jarak antar input
-  static const double inline = 8; // jarak ikon ke label
+  static const double screen = 20;
+  static const double section = 20;
+  static const double labelGap = 6;
+  static const double card = 16;
+  static const double listItem = 12;
+  static const double grid = 12;
+  static const double formField = 16;
+  static const double inline = 8;
+  static const double bottomClearance = 100; // scroll clearance layar utama
 }
 
 /// Radius sudut yang konsisten.
 abstract final class AppRadius {
   static const double sm = 8; // status pill / badge
-  static const double md = 12; // button & text input
+  static const double md = 14; // boxed text input
   static const double lg = 16; // card / container utama
-  static const double chip = 10; // filter chip
-  static const double modal = 20; // modal dialog
-  static const double bottomSheet = 20; // bottom sheet (atas)
+  static const double chip = 12; // filter chip
+  static const double nav = 22; // floating bottom nav
+  static const double button = 25; // pill button
+  static const double modal = 24; // modal & feedback popup
   static const double pill = 999;
 }
 
@@ -58,10 +59,7 @@ abstract final class AppTheme {
       visualDensity: VisualDensity.standard,
     );
 
-    final textTheme = base.textTheme
-        .apply(fontFamily: fontFamily)
-        .copyWith(
-          // Display / H1
+    final textTheme = base.textTheme.apply(fontFamily: fontFamily).copyWith(
           displayLarge: const TextStyle(
             fontSize: 26,
             height: 1.25,
@@ -70,7 +68,6 @@ abstract final class AppTheme {
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
-          // Heading / H2
           headlineLarge: const TextStyle(
             fontSize: 20,
             height: 1.30,
@@ -79,7 +76,6 @@ abstract final class AppTheme {
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
-          // Title / H3
           titleLarge: const TextStyle(
             fontSize: 16,
             height: 1.35,
@@ -88,7 +84,6 @@ abstract final class AppTheme {
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
-          // Body
           bodyLarge: const TextStyle(
             fontSize: 14,
             height: 1.50,
@@ -97,7 +92,6 @@ abstract final class AppTheme {
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
-          // Body Strong
           bodyMedium: const TextStyle(
             fontSize: 14,
             height: 1.50,
@@ -106,7 +100,6 @@ abstract final class AppTheme {
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
-          // Caption
           bodySmall: const TextStyle(
             fontSize: 12,
             height: 1.40,
@@ -115,7 +108,6 @@ abstract final class AppTheme {
             color: AppColors.textSecondary,
             fontFamily: fontFamily,
           ),
-          // Caption Bold / label
           labelLarge: const TextStyle(
             fontSize: 15,
             height: 1.20,
@@ -142,7 +134,6 @@ abstract final class AppTheme {
           ),
         );
 
-    // Alias yang dipakai kode lama: headlineMedium, headlineSmall, titleMedium, titleSmall
     final textThemeFull = textTheme.copyWith(
       headlineMedium: textTheme.headlineLarge,
       headlineSmall: textTheme.titleLarge,
@@ -158,10 +149,10 @@ abstract final class AppTheme {
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           fontFamily: fontFamily,
         ),
@@ -170,7 +161,7 @@ abstract final class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
+          horizontal: 16,
           vertical: 14,
         ),
         hintStyle: const TextStyle(
@@ -189,11 +180,11 @@ abstract final class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.controlBorder, width: 1),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.controlBorder, width: 1),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -228,7 +219,7 @@ abstract final class AppTheme {
             fontFamily: fontFamily,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
         ),
       ),
@@ -245,7 +236,7 @@ abstract final class AppTheme {
           ),
           side: const BorderSide(color: AppColors.forest, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
         ),
       ),
@@ -274,15 +265,16 @@ abstract final class AppTheme {
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.white,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.forestSurface,
+        indicatorColor: Colors.transparent,
         height: 64,
-        elevation: 0,
+        elevation: 6,
+        shadowColor: Color(0x1A1E2621),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w600
                 : FontWeight.w400,
@@ -294,7 +286,7 @@ abstract final class AppTheme {
         ),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            size: 24,
+            size: 22,
             color: states.contains(WidgetState.selected)
                 ? AppColors.forest
                 : AppColors.textSecondary,
@@ -304,7 +296,7 @@ abstract final class AppTheme {
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: AppColors.surface,
         selectedColor: AppColors.forest,
-        side: const BorderSide(color: AppColors.controlBorder),
+        side: const BorderSide(color: AppColors.border),
         labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
@@ -331,7 +323,7 @@ abstract final class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.modal),
@@ -368,5 +360,4 @@ abstract final class AppTheme {
       ),
     );
   }
-
 }
