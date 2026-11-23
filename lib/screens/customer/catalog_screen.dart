@@ -275,7 +275,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: AppSpacing.md,
                 mainAxisSpacing: AppSpacing.md,
-                childAspectRatio: 0.75,
+                childAspectRatio: 0.6,
               ),
               itemBuilder: (_, _) => const ItemCardSkeleton(),
             ),

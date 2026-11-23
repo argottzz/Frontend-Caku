@@ -74,7 +74,7 @@ class ItemCard extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        Formatters.rupiah(item.hargaSewaHarian),
+                        '${Formatters.rupiah(item.hargaSewaHarian)}/hari',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -82,12 +82,6 @@ class ItemCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                           color: AppColors.forest,
                         ),
-                      ),
-                      Text(
-                        'per hari',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(fontSize: 10),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       CompactStockLine(stock: item.stok),

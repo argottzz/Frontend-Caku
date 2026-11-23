@@ -37,7 +37,7 @@ void main() {
     );
 
     expect(find.text('Tenda Dome 4P'), findsOneWidget);
-    expect(find.text('Rp 50.000'), findsOneWidget);
+    expect(find.text('Rp 50.000/hari'), findsOneWidget);
     expect(find.text('Tenda dan Shelter'.toUpperCase()), findsOneWidget);
   });
 
