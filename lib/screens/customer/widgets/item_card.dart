@@ -61,18 +61,16 @@ class ItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Expanded(
-                        child: Text(
-                          item.nama,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontSize: 14,
-                                height: 1.3,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
+                      Text(
+                        item.nama,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontSize: 14,
+                              height: 1.3,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(

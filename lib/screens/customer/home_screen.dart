@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisCount: 2,
                     crossAxisSpacing: AppSpacing.md,
                     mainAxisSpacing: AppSpacing.md,
-                    mainAxisExtent: 260,
+                    mainAxisExtent: 290,
                   ),
                   itemBuilder: (_, _) => const ItemCardSkeleton(),
                 )
@@ -190,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisCount: 2,
                     crossAxisSpacing: AppSpacing.md,
                     mainAxisSpacing: AppSpacing.md,
-                    mainAxisExtent: 260,
+                    mainAxisExtent: 290,
                   ),
                   itemBuilder: (context, index) {
                     final item = _items[index];
