@@ -409,7 +409,7 @@ class AccentButton extends StatelessWidget {
         minimumSize: const Size(44, 50),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
       child: loading

@@ -1,41 +1,41 @@
 import 'package:flutter/material.dart';
 
-/// Token warna resmi CAKU (sesuai design.md).
+/// Token warna resmi CAKU (sesuai FINAL DESIGN SPECIFICATION).
 abstract final class AppColors {
   // Identitas merek
-  static const Color forest = Color(0xFF2A573F); // Forest Pine (primary)
-  static const Color forestDeep = Color(0xFF1E2621); // Deep Pine Charcoal
-  static const Color orange = Color(0xFFFF7761); // Coral Ember (accent)
-  static const Color cream = Color(0xFFF6F7F5); // Mist Stone
+  static const Color forest = Color(0xFF214932);
+  static const Color forestDeep = Color(0xFF163322);
+  static const Color orange = Color(0xFFD48432); // Accent Block / Badge
+  static const Color cream = Color(0xFFF2E5C7); // Sand Cream
 
   // Netral
   static const Color white = Color(0xFFFFFFFF);
-  static const Color nearBlack = Color(0xFF1E2621);
-  static const Color gray = Color(0xFF5A635E); // Muted Slate Pine
-  static const Color lightGray = Color(0xFFEAECE9); // Soft Ash
+  static const Color nearBlack = Color(0xFF171717);
+  static const Color gray = Color(0xFF5F635D); // Muted Earth Gray
+  static const Color lightGray = Color(0xFFE5E5DF); // Disabled Surface / Hairline
 
   // Permukaan
-  static const Color background = Color(0xFFFFFFFF); // Pure White
-  static const Color surface = Color(0xFFF6F7F5); // Mist Stone (card & field)
-  static const Color surfaceMuted = Color(0xFFEAECE9); // Soft Ash (read-only)
-  static const Color border = Color(0xFFE4E7E3); // Soft Mist Border
-  static const Color controlBorder = Color(0xFF727874); // Slate Olive
+  static const Color background = Color(0xFFF2E5C7); // Sand Cream
+  static const Color surface = white; // Pure White (card)
+  static const Color surfaceMuted = Color(0xFFF5F5F3); // Soft Stone (read-only)
+  static const Color border = Color(0xFFE5E5DF); // Divider / Hairline
+  static const Color controlBorder = Color(0xFF73766F); // Slate Olive
   static const Color focusBorder = forest;
   static const Color errorBorder = Color(0xFFA32929);
 
   // Teks
-  static const Color textPrimary = Color(0xFF1E2621); // Deep Pine Charcoal
-  static const Color textSecondary = Color(0xFF5A635E); // Muted Slate Pine
+  static const Color textPrimary = Color(0xFF353B36); // Charcoal Forest
+  static const Color textSecondary = Color(0xFF5F635D); // Muted Earth Gray
   static const Color textOnDark = white;
-  static const Color textOnOrange = Color(0xFF1F1512); // Dark Espresso
-  static const Color accentText = Color(0xFFC94632); // Deep Coral
-  static const Color decorativeIcon = Color(0xFF8E9490);
+  static const Color textOnOrange = Color(0xFF1F1A14); // Dark Espresso
+  static const Color accentText = Color(0xFF9E5814); // Deep Ochre
+  static const Color decorativeIcon = Color(0xFF8A8A84);
 
-  // Status (wajib disertai ikon + label teks)
+  // Status (wajib ikon + label)
   static const Color pendingBg = Color(0xFFFFF0D9);
   static const Color pendingText = Color(0xFF8A4A0B);
-  static const Color approvedBg = Color(0xFFE7F2EC);
-  static const Color approvedText = Color(0xFF2A573F);
+  static const Color approvedBg = Color(0xFFE8F1E9);
+  static const Color approvedText = Color(0xFF477653);
   static const Color ongoingBg = Color(0xFFE5EFF8);
   static const Color ongoingText = Color(0xFF2E5B7A);
   static const Color overdueBg = Color(0xFFFCE8E8);
@@ -46,8 +46,8 @@ abstract final class AppColors {
   static const Color rejectedText = Color(0xFFA32929);
 
   // Alias lama
-  static const Color success = Color(0xFF2A573F);
-  static const Color successSurface = Color(0xFFE7F2EC);
+  static const Color success = Color(0xFF2E7D32);
+  static const Color successSurface = Color(0xFFE8F3E9);
   static const Color warning = Color(0xFF8A4A0B);
   static const Color warningSurface = Color(0xFFFFF0D9);
   static const Color error = Color(0xFFA32929);
@@ -56,12 +56,12 @@ abstract final class AppColors {
   static const Color infoSurface = Color(0xFFE5EFF8);
 
   // Aksen lembut
-  static const Color forestSurface = Color(0xFFE7F2EC);
-  static const Color orangeSurface = Color(0xFFFFEAE6);
+  static const Color forestSurface = Color(0xFFE7EDE8);
+  static const Color orangeSurface = Color(0xFFFAEBD9);
 
   // Disabled
-  static const Color disabledSurface = Color(0xFFEAECE9);
-  static const Color disabledText = Color(0xFF5A635E);
+  static const Color disabledSurface = Color(0xFFE5E5DF);
+  static const Color disabledText = Color(0xFF5F635D);
 
   // Elevated (modal)
   static const Color elevated = white;

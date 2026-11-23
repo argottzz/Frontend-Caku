@@ -21,18 +21,16 @@ abstract final class AppSpacing {
   static const double grid = 12;
   static const double formField = 16;
   static const double inline = 8;
-  static const double bottomClearance = 100; // scroll clearance layar utama
 }
 
 /// Radius sudut yang konsisten.
 abstract final class AppRadius {
   static const double sm = 8; // status pill / badge
-  static const double md = 14; // boxed text input
+  static const double md = 12; // button & text input
   static const double lg = 16; // card / container utama
-  static const double chip = 12; // filter chip
-  static const double nav = 22; // floating bottom nav
-  static const double button = 25; // pill button
-  static const double modal = 24; // modal & feedback popup
+  static const double chip = 10; // filter chip
+  static const double modal = 20; // modal dialog
+  static const double bottomSheet = 20; // bottom sheet (atas)
   static const double pill = 999;
 }
 
@@ -149,10 +147,10 @@ abstract final class AppTheme {
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         titleTextStyle: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           fontFamily: fontFamily,
         ),
@@ -161,7 +159,7 @@ abstract final class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
+          horizontal: 14,
           vertical: 14,
         ),
         hintStyle: const TextStyle(
@@ -180,11 +178,11 @@ abstract final class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: const BorderSide(color: AppColors.controlBorder, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: const BorderSide(color: AppColors.controlBorder, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -219,7 +217,7 @@ abstract final class AppTheme {
             fontFamily: fontFamily,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
       ),
@@ -236,7 +234,7 @@ abstract final class AppTheme {
           ),
           side: const BorderSide(color: AppColors.forest, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
       ),
@@ -265,16 +263,15 @@ abstract final class AppTheme {
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: Colors.transparent,
+        indicatorColor: AppColors.forestSurface,
         height: 64,
-        elevation: 6,
-        shadowColor: Color(0x1A1E2621),
+        elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w600
                 : FontWeight.w400,
@@ -286,7 +283,7 @@ abstract final class AppTheme {
         ),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            size: 22,
+            size: 24,
             color: states.contains(WidgetState.selected)
                 ? AppColors.forest
                 : AppColors.textSecondary,
@@ -296,7 +293,7 @@ abstract final class AppTheme {
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: AppColors.surface,
         selectedColor: AppColors.forest,
-        side: const BorderSide(color: AppColors.border),
+        side: const BorderSide(color: AppColors.controlBorder),
         labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
@@ -323,7 +320,7 @@ abstract final class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.modal),
