@@ -31,7 +31,7 @@ class PrimaryButton extends StatelessWidget {
         minimumSize: const Size(44, 50),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
       child: Row(
@@ -97,7 +97,7 @@ class SecondaryButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         side: const BorderSide(color: AppColors.forest, width: 1.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
       child: Row(
@@ -160,7 +160,7 @@ class DangerButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         side: const BorderSide(color: AppColors.error, width: 1.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
       child: Row(
