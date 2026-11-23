@@ -80,53 +80,105 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: AppSpacing.sm),
-                Center(
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppColors.forest,
-                    child: Text(
-                      user.initials,
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  user.nama,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                if (isAdmin)
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.forest,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: const Text(
-                        'Admin',
-                        style: TextStyle(
+                // Header 2 kolom
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 38,
+                      backgroundColor: AppColors.forest,
+                      child: Text(
+                        user.initials,
+                        style: const TextStyle(
                           color: AppColors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  user.email,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.nama,
+                            style: Theme.of(context).textTheme.headlineLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          if (isAdmin)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.forest,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
+                              ),
+                              child: const Text(
+                                'Admin',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            user.email,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Row(
+                            children: [
+                              FilledButton(
+                                onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const EditProfileScreen(),
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.orange,
+                                  foregroundColor: AppColors.textOnOrange,
+                                  minimumSize: const Size(0, 40),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.lg,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
+                                  ),
+                                ),
+                                child: const Text('Edit Profil'),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              IconButton(
+                                onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        const ChangePasswordScreen(),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.lock_reset_rounded),
+                                tooltip: 'Ubah Password',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: AppColors.surface,
+                                  foregroundColor: AppColors.textPrimary,
+                                  shape: const CircleBorder(),
+                                  side: const BorderSide(
+                                    color: AppColors.border,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 if (!isAdmin) ...[
@@ -173,24 +225,6 @@ class ProfileScreen extends StatelessWidget {
                 _MenuCard(
                   children: [
                     _MenuItem(
-                      icon: Icons.edit_outlined,
-                      label: 'Edit Profil',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const EditProfileScreen(),
-                        ),
-                      ),
-                    ),
-                    _MenuItem(
-                      icon: Icons.lock_reset_rounded,
-                      label: 'Ubah Password',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const ChangePasswordScreen(),
-                        ),
-                      ),
-                    ),
-                    _MenuItem(
                       icon: Icons.info_outline_rounded,
                       label: 'Tentang CAKU',
                       onTap: () => _showAbout(context),
@@ -205,6 +239,9 @@ class ProfileScreen extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.error,
                     side: const BorderSide(color: AppColors.error, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),

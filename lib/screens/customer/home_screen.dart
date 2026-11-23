@@ -9,6 +9,7 @@ import '../../state/app_scope.dart';
 import '../../widgets/state_views.dart';
 import 'catalog_screen.dart';
 import 'item_detail_screen.dart';
+import '../profile_screen.dart';
 import 'widgets/item_card.dart';
 import 'cart_screen.dart';
 
@@ -111,7 +112,16 @@ class _HomeScreenState extends State<HomeScreen> {
               AppSpacing.xxl,
             ),
             children: [
-              _Header(name: name, cartCount: cart.totalQuantity, onCart: _openCart),
+              _Header(
+                name: name,
+                cartCount: cart.totalQuantity,
+                onCart: _openCart,
+                onProfile: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const ProfileScreen(showBack: true),
+                  ),
+                ),
+              ),
               const SizedBox(height: AppSpacing.lg),
               _SearchTrigger(onTap: () => _openCatalog(autofocus: true)),
               const SizedBox(height: AppSpacing.lg),
@@ -204,11 +214,13 @@ class _Header extends StatelessWidget {
     required this.name,
     required this.cartCount,
     required this.onCart,
+    required this.onProfile,
   });
 
   final String name;
   final int cartCount;
   final VoidCallback onCart;
+  final VoidCallback onProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +282,22 @@ class _Header extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: IconButton(
+            onPressed: onProfile,
+            icon: const Icon(Icons.person_outline_rounded),
+            tooltip: 'Profil',
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.textPrimary,
+              shape: const CircleBorder(),
+              side: const BorderSide(color: AppColors.border),
+            ),
           ),
         ),
       ],
