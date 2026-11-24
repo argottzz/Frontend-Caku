@@ -20,18 +20,220 @@ import '../rental_detail_screen.dart';
 import '../rentals_screen.dart';
 import 'reports_screen.dart';
 
-/// Dashboard admin dari `GET /reports/summary`.
+/// Dashboard admin: dua tab dalam satu halaman.
+///
+/// * **Ringkasan** — kondisi operasional hari ini (`GET /reports/summary`).
+/// * **Laporan** — rekap dengan filter tanggal dan status.
+///
+/// Dulu keduanya dua halaman terpisah dengan header yang sama; sekarang
+/// header dan pemilih tab dipakai bersama, isi tiap tab tetap di file
+/// masing-masing.
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key, this.loadReport});
+  const AdminDashboardScreen({
+    super.key,
+    this.loadReport,
+    this.loadReports,
+    this.initialTab = 0,
+  });
 
   /// Sumber data opsional untuk pengujian; produksi memakai [ReportService].
   final Future<ReportData> Function()? loadReport;
+
+  /// 0 = Ringkasan, 1 = Laporan.
+  final int initialTab;
+  final Future<ReportData> Function({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? status,
+    int page,
+    int limit,
+  })?
+  loadReports;
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  static const int _summaryTab = 0;
+  static const int _reportsTab = 1;
+
+  int _tab = _summaryTab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = widget.initialTab.clamp(_summaryTab, _reportsTab);
+    _reportsVisited = _tab == _reportsTab;
+  }
+
+  /// Tab laporan baru dibangun setelah pertama kali dibuka, supaya dashboard
+  /// tidak memanggil API laporan sebelum admin membutuhkannya. Setelah itu
+  /// widget tetap hidup sehingga filter tanggal tidak hilang saat berpindah
+  /// tab.
+  bool _reportsVisited = false;
+
+  void _selectTab(int index) {
+    if (_tab == index) return;
+    setState(() {
+      if (index == _reportsTab) _reportsVisited = true;
+      _tab = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+            child: const ForestHeader(
+              height: 168,
+              eyebrow: 'CAKU Admin',
+              title: 'Dashboard',
+              subtitle: 'Ringkasan dan laporan operasional CAKU',
+            ),
+          ),
+          _DashboardTabs(selected: _tab, onSelect: _selectTab),
+          Expanded(
+            child: IndexedStack(
+              index: _tab,
+              children: [
+                DashboardSummaryTab(
+                  loadReport: widget.loadReport,
+                  onOpenReports: () => _selectTab(_reportsTab),
+                ),
+                if (_reportsVisited)
+                  ReportsTab(loadReports: widget.loadReports)
+                else
+                  const SizedBox.shrink(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pemilih tab "Ringkasan" / "Laporan" di bawah header admin.
+class _DashboardTabs extends StatelessWidget {
+  const _DashboardTabs({required this.selected, required this.onSelect});
+
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabButton(
+              label: 'Ringkasan',
+              icon: Icons.dashboard_outlined,
+              selected: selected == 0,
+              onTap: () => onSelect(0),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _TabButton(
+              label: 'Laporan',
+              icon: Icons.bar_chart_rounded,
+              selected: selected == 1,
+              onTap: () => onSelect(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? AppColors.white : AppColors.forest;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected ? AppColors.moss : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Container(
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: selected ? AppColors.moss : AppColors.border,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 17, color: foreground),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: foreground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Isi tab Ringkasan: tugas tertunda, statistik, pendapatan, inventaris,
+/// transaksi terbaru, dan aksi cepat.
+class DashboardSummaryTab extends StatefulWidget {
+  const DashboardSummaryTab({
+    super.key,
+    this.loadReport,
+    required this.onOpenReports,
+  });
+
+  final Future<ReportData> Function()? loadReport;
+
+  /// Membuka tab Laporan pada halaman yang sama.
+  final VoidCallback onOpenReports;
+
+  @override
+  State<DashboardSummaryTab> createState() => _DashboardSummaryTabState();
+}
+
+class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
   ReportData? _data;
   bool _loading = true;
   String? _error;
@@ -112,10 +314,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: AppColors.background, body: _buildBody());
-  }
-
-  Widget _buildBody() {
     if (_loading && _data == null) {
       return const LoadingView(message: 'Memuat ringkasan...');
     }
@@ -132,22 +330,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       color: AppColors.forest,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.only(top: AppSpacing.md),
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: const ForestHeader(
-              height: 168,
-              eyebrow: 'CAKU Admin',
-              title: 'Dashboard',
-              subtitle: 'Ringkasan operasional CAKU',
-            ),
-          ),
           ResponsiveFrame(
             maxWidth: 960,
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
-              AppSpacing.lg,
+              AppSpacing.sm,
               AppSpacing.lg,
               AppSpacing.xxl,
             ),
@@ -212,11 +401,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ],
                 const SizedBox(height: AppSpacing.lg),
                 _QuickActions(
-                  onReports: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ReportsScreen(),
-                    ),
-                  ),
+                  onReports: widget.onOpenReports,
                   onApplications: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const AdminApplicationsScreen(),

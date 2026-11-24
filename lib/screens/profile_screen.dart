@@ -9,9 +9,8 @@ import '../widgets/forest_header.dart';
 import '../widgets/layout.dart';
 import '../widgets/state_views.dart';
 import '../widgets/status_badge.dart';
-import 'admin/reports_screen.dart';
+import 'admin/dashboard_screen.dart';
 import 'admin_applications_screen.dart';
-import 'admin_application_screen.dart';
 
 /// Profil pengguna. Customer: [14], Admin: [28].
 ///
@@ -35,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// Hanya keterangan status yang ditampilkan; pengajuan tetap dilakukan di
-  /// [AdminApplicationScreen].
+  /// [AdminApplicationsScreen].
   Future<void> _loadApplicationStatus() async {
     final auth = AuthScope.maybeOf(context);
     final user = auth?.user;
@@ -88,6 +87,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _open(BuildContext context, Widget screen) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+  }
+
+  /// Laporan adalah tab di dalam Dashboard, jadi dibuka sebagai halaman
+  /// Dashboard yang langsung memilih tab tersebut.
+  void _openDashboardTab(BuildContext context, int initialTab) {
+    _open(context, AdminDashboardScreen(initialTab: initialTab));
   }
 
   @override
@@ -155,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () async {
                           await Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => const AdminApplicationScreen(),
+                              builder: (_) => const AdminApplicationsScreen(),
                             ),
                           );
                           if (mounted) _loadApplicationStatus();
@@ -174,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _MenuItem(
                         icon: Icons.bar_chart_rounded,
                         label: 'Laporan Pendapatan',
-                        onTap: () => _open(context, const ReportsScreen()),
+                        onTap: () => _openDashboardTab(context, 1),
                       ),
                       _MenuItem(
                         icon: Icons.assignment_ind_outlined,

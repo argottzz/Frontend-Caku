@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../screens/auth/login_screen.dart';
+import '../../screens/auth/auth_screen.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_buttons.dart';
 import '../../widgets/forest_pattern.dart';
@@ -55,7 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await AppScope.read(context).storage.writeOnboardingSeen();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      MaterialPageRoute<void>(builder: (_) => const AuthScreen()),
     );
   }
 

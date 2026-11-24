@@ -14,12 +14,17 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBack = false,
     this.bottom,
     this.transparent = false,
+    this.leading,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget>? actions;
   final bool showBack;
+
+  /// Tombol kiri kustom, dipakai layar yang menampilkan detail di dalam
+  /// halaman yang sama (kembali ke daftar, bukan keluar halaman).
+  final Widget? leading;
   final PreferredSizeWidget? bottom;
 
   /// Latar transparan untuk app bar di atas header bergambar.
@@ -35,17 +40,19 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: transparent ? Colors.transparent : AppColors.background,
       foregroundColor: foreground,
-      automaticallyImplyLeading: showBack,
-      leading: showBack
-          ? null
-          : const Padding(
-              padding: EdgeInsets.only(
-                left: AppSpacing.lg,
-                right: AppSpacing.xs,
-              ),
-              child: CakuLogoMark(size: 34),
-            ),
-      leadingWidth: showBack ? null : 58,
+      automaticallyImplyLeading: showBack && leading == null,
+      leading:
+          leading ??
+          (showBack
+              ? null
+              : const Padding(
+                  padding: EdgeInsets.only(
+                    left: AppSpacing.lg,
+                    right: AppSpacing.xs,
+                  ),
+                  child: CakuLogoMark(size: 34),
+                )),
+      leadingWidth: leading != null || !showBack ? 58 : null,
       titleSpacing: showBack ? 0 : AppSpacing.sm,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

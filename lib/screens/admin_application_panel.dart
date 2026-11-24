@@ -7,22 +7,30 @@ import '../core/utils/formatters.dart';
 import '../data/admin_application_service.dart';
 import '../state/app_scope.dart';
 import '../widgets/app_snack.dart';
-import '../widgets/caku_app_bar.dart';
 import '../widgets/form_widgets.dart';
 import '../widgets/layout.dart';
 import '../widgets/state_views.dart';
 import '../widgets/status_badge.dart';
 
-/// Form Pengajuan Admin (17). Textarea alasan pengajuan dihilangkan karena
-/// backend tidak menyimpannya.
-class AdminApplicationScreen extends StatefulWidget {
-  const AdminApplicationScreen({super.key});
+/// Panel "Pengajuan Saya" untuk customer: status permohonan menjadi admin,
+/// pengajuan baru, dan alasan penolakan bila ada.
+///
+/// Isinya dipindahkan apa adanya dari halaman Permohonan Menjadi Admin yang
+/// dulu berdiri sendiri; kerangka layar (AppBar dan tab) disediakan
+/// [AdminApplicationsScreen].
+class CustomerApplicationPanel extends StatefulWidget {
+  const CustomerApplicationPanel({super.key, this.onStatusChanged});
+
+  /// Dipanggil setiap status berhasil dimuat, agar lencana di Profil ikut
+  /// diperbarui tanpa memuat ulang profil.
+  final ValueChanged<String>? onStatusChanged;
 
   @override
-  State<AdminApplicationScreen> createState() => _AdminApplicationScreenState();
+  State<CustomerApplicationPanel> createState() =>
+      _CustomerApplicationPanelState();
 }
 
-class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
+class _CustomerApplicationPanelState extends State<CustomerApplicationPanel> {
   Map<String, dynamic>? _application;
   bool _loading = true;
   String? _error;
@@ -45,10 +53,12 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
       ).adminApplications.myApplication();
       if (!mounted) return;
       setState(() => _application = data);
+      widget.onStatusChanged?.call(applicationStatus(data));
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _error = error.message);
     } catch (error) {
+      debugPrint('Permohonan admin error: $error');
       if (!mounted) return;
       setState(() => _error = 'Terjadi kesalahan saat memuat data.');
     } finally {
@@ -79,16 +89,16 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CakuAppBar(
-        title: 'Permohonan Menjadi Admin',
-        showBack: true,
+    if (_loading) return const LoadingView();
+    if (_error != null) return ErrorView(message: _error!, onRetry: _load);
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppColors.forest,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        children: [ResponsiveFrame(child: _buildBody())],
       ),
-      body: _loading
-          ? const LoadingView()
-          : _error != null
-          ? ErrorView(message: _error!, onRetry: _load)
-          : ResponsiveFrame(child: _buildBody()),
     );
   }
 
@@ -111,16 +121,10 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
           const SizedBox(height: AppSpacing.lg),
           FilledButton(
             onPressed: _submitting ? null : _apply,
-            child: _submitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.white,
-                    ),
-                  )
-                : const Text('Ajukan Permohonan'),
+            child: _SubmittingIndicator(
+              submitting: _submitting,
+              label: 'Ajukan Permohonan',
+            ),
           ),
         ],
       );
@@ -180,18 +184,30 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
         const SizedBox(height: AppSpacing.lg),
         FilledButton(
           onPressed: _submitting ? null : _apply,
-          child: _submitting
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.white,
-                  ),
-                )
-              : const Text('Ajukan Kembali'),
+          child: _SubmittingIndicator(
+            submitting: _submitting,
+            label: 'Ajukan Kembali',
+          ),
         ),
       ],
+    );
+  }
+}
+
+/// Isi tombol utama: spinner saat dikirim, teks saat diam.
+class _SubmittingIndicator extends StatelessWidget {
+  const _SubmittingIndicator({required this.submitting, required this.label});
+
+  final bool submitting;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!submitting) return Text(label);
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
     );
   }
 }

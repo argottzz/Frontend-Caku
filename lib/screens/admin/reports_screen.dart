@@ -9,16 +9,19 @@ import '../../models/report.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/form_widgets.dart';
-import '../../widgets/forest_header.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_filter_bar.dart';
 import '../rental_detail_screen.dart';
 
-/// Laporan admin: filter tanggal/status, ringkasan, dan daftar transaksi.
-class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key, this.loadReports});
+/// Isi tab Laporan pada [AdminDashboardScreen].
+///
+/// Dulu halaman Laporan Pendapatan tersendiri; sekarang header dan pemilih
+/// tab disediakan dashboard, sedangkan filter, ringkasan, dan daftar
+/// transaksi tetap ditangani di sini.
+class ReportsTab extends StatefulWidget {
+  const ReportsTab({super.key, this.loadReports});
 
   /// Sumber data opsional untuk pengujian.
   final Future<ReportData> Function({
@@ -31,10 +34,10 @@ class ReportsScreen extends StatefulWidget {
   loadReports;
 
   @override
-  State<ReportsScreen> createState() => _ReportsScreenState();
+  State<ReportsTab> createState() => _ReportsTabState();
 }
 
-class _ReportsScreenState extends State<ReportsScreen> {
+class _ReportsTabState extends State<ReportsTab> {
   static const int _pageSize = 10;
 
   ReportData? _data;
@@ -200,159 +203,140 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     final summary = _data?.ringkasan ?? ReportSummary.empty;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: RefreshIndicator(
-        onRefresh: () => _load(reset: true),
-        color: AppColors.forest,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-              child: const ForestHeader(
-                height: 168,
-                eyebrow: 'CAKU Admin',
-                title: 'Laporan Pendapatan',
-                subtitle: 'Rekap transaksi dan pendapatan',
-              ),
+    return RefreshIndicator(
+      onRefresh: () => _load(reset: true),
+      color: AppColors.forest,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        children: [
+          StatusFilterBar(selected: _status, onSelect: _selectStatus),
+          ResponsiveFrame(
+            maxWidth: 960,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xxl,
             ),
-            StatusFilterBar(selected: _status, onSelect: _selectStatus),
-            ResponsiveFrame(
-              maxWidth: 960,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.xxl,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _FilterCard(
-                    start: _start,
-                    end: _end,
-                    onPickStart: _pickStart,
-                    onPickEnd: _pickEnd,
-                    onClearStart: _start == null ? null : _clearStart,
-                    onClearEnd: _end == null ? null : _clearEnd,
-                    onReset: _hasActiveFilter ? _resetFilters : null,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _FilterCard(
+                  start: _start,
+                  end: _end,
+                  onPickStart: _pickStart,
+                  onPickEnd: _pickEnd,
+                  onClearStart: _start == null ? null : _clearStart,
+                  onClearEnd: _end == null ? null : _clearEnd,
+                  onReset: _hasActiveFilter ? _resetFilters : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                if (_loading && _data == null)
+                  const ListSkeleton(count: 4, itemHeight: 120)
+                else if (_error != null && _data == null)
+                  ErrorView(message: _error!, onRetry: () => _load(reset: true))
+                else ...[
+                  SummaryCard(
+                    title: 'Ringkasan laporan',
+                    children: [
+                      InfoRow(
+                        label: 'Jumlah transaksi',
+                        value: '${summary.totalTransaksi}',
+                      ),
+                      InfoRow(
+                        label: 'Total sewa',
+                        value: Formatters.rupiah(summary.totalSewa),
+                      ),
+                      InfoRow(
+                        label: 'Total denda',
+                        value: Formatters.rupiah(summary.totalDenda),
+                      ),
+                      const Divider(height: AppSpacing.lg),
+                      InfoRow(
+                        label: 'Total pendapatan',
+                        value: Formatters.rupiah(summary.totalPendapatan),
+                        emphasize: true,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Filter berdasarkan tanggal mulai sewa. Status '
+                        'filter memengaruhi ringkasan dan daftar transaksi.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  SectionHeader(
+                    title: 'Hasil laporan',
+                    subtitle: _rentals.isEmpty
+                        ? 'Tidak ada transaksi pada filter ini'
+                        : '${_rentals.length} dari '
+                              '${_data?.pagination?.total ?? _rentals.length} '
+                              'transaksi',
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  if (_loading && _data == null)
-                    const ListSkeleton(count: 4, itemHeight: 120)
-                  else if (_error != null && _data == null)
-                    ErrorView(
-                      message: _error!,
-                      onRetry: () => _load(reset: true),
+                  if (_rentals.isEmpty)
+                    EmptyView(
+                      compact: true,
+                      icon: Icons.receipt_long_rounded,
+                      title: 'Tidak ada transaksi',
+                      message:
+                          'Ubah filter tanggal atau status untuk melihat '
+                          'transaksi lain.',
+                      actionLabel: _hasActiveFilter ? 'Reset filter' : null,
+                      onAction: _hasActiveFilter ? _resetFilters : null,
                     )
-                  else ...[
-                    SummaryCard(
-                      title: 'Ringkasan laporan',
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        InfoRow(
-                          label: 'Jumlah transaksi',
-                          value: '${summary.totalTransaksi}',
-                        ),
-                        InfoRow(
-                          label: 'Total sewa',
-                          value: Formatters.rupiah(summary.totalSewa),
-                        ),
-                        InfoRow(
-                          label: 'Total denda',
-                          value: Formatters.rupiah(summary.totalDenda),
-                        ),
-                        const Divider(height: AppSpacing.lg),
-                        InfoRow(
-                          label: 'Total pendapatan',
-                          value: Formatters.rupiah(summary.totalPendapatan),
-                          emphasize: true,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          'Filter berdasarkan tanggal mulai sewa. Status '
-                          'filter memengaruhi ringkasan dan daftar transaksi.',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                        for (final rental in _rentals) ...[
+                          RentalCard(
+                            key: ValueKey(rental.id),
+                            rental: rental,
+                            showCustomer: true,
+                            onTap: () => _openDetail(rental),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
+                        if (_hasNext)
+                          TextButton.icon(
+                            onPressed: _loadingMore
+                                ? null
+                                : () => _load(reset: false),
+                            icon: _loadingMore
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.expand_more_rounded,
+                                    size: 18,
+                                  ),
+                            label: Text(
+                              _loadingMore ? 'Memuat...' : 'Muat lebih banyak',
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.sm),
+                            child: Text(
+                              '${_rentals.length} transaksi ditampilkan',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    SectionHeader(
-                      title: 'Hasil laporan',
-                      subtitle: _rentals.isEmpty
-                          ? 'Tidak ada transaksi pada filter ini'
-                          : '${_rentals.length} dari '
-                                '${_data?.pagination?.total ?? _rentals.length} '
-                                'transaksi',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    if (_rentals.isEmpty)
-                      EmptyView(
-                        compact: true,
-                        icon: Icons.receipt_long_rounded,
-                        title: 'Tidak ada transaksi',
-                        message:
-                            'Ubah filter tanggal atau status untuk melihat '
-                            'transaksi lain.',
-                        actionLabel: _hasActiveFilter ? 'Reset filter' : null,
-                        onAction: _hasActiveFilter ? _resetFilters : null,
-                      )
-                    else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final rental in _rentals) ...[
-                            RentalCard(
-                              key: ValueKey(rental.id),
-                              rental: rental,
-                              showCustomer: true,
-                              onTap: () => _openDetail(rental),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
-                          if (_hasNext)
-                            TextButton.icon(
-                              onPressed: _loadingMore
-                                  ? null
-                                  : () => _load(reset: false),
-                              icon: _loadingMore
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.expand_more_rounded,
-                                      size: 18,
-                                    ),
-                              label: Text(
-                                _loadingMore
-                                    ? 'Memuat...'
-                                    : 'Muat lebih banyak',
-                              ),
-                            )
-                          else
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: AppSpacing.sm,
-                              ),
-                              child: Text(
-                                '${_rentals.length} transaksi ditampilkan',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                        ],
-                      ),
-                  ],
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

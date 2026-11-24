@@ -9,12 +9,17 @@ import '../widgets/caku_app_bar.dart';
 import '../widgets/category_strip.dart';
 import '../widgets/state_views.dart';
 import '../widgets/status_badge.dart';
-import 'admin_application_detail_screen.dart';
+import 'admin_application_panel.dart';
+import 'admin_application_review_panel.dart';
 
-/// Daftar Permohonan Admin (26).
+/// Halaman Permohonan Admin untuk kedua peran.
 ///
-/// Filter status memakai chip yang sama dengan filter kategori/status lain
-/// agar bahasa visual filter konsisten di seluruh aplikasi.
+/// * Customer melihat status permohonan miliknya sendiri (dulu halaman
+///   Permohonan Menjadi Admin).
+/// * Admin melihat daftar permohonan dan meninjau satu permohonan di halaman
+///   yang sama (dulu halaman Daftar + Detail Permohonan).
+///
+/// Isi tiap peran dipisah ke file sendiri agar halaman ini tetap ringkas.
 class AdminApplicationsScreen extends StatefulWidget {
   const AdminApplicationsScreen({super.key});
 
@@ -24,6 +29,73 @@ class AdminApplicationsScreen extends StatefulWidget {
 }
 
 class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
+  /// Permohonan yang sedang ditinjau admin; `null` berarti daftar.
+  int? _openId;
+
+  /// Status terakhir milik customer (dipakai untuk judul tab).
+  String _myStatus = 'none';
+
+  void _openDetail(int id) => setState(() => _openId = id);
+
+  void _closeDetail() => setState(() => _openId = null);
+
+  @override
+  Widget build(BuildContext context) {
+    final isAdmin = AuthScope.of(context).isAdmin;
+    final openId = _openId;
+
+    if (isAdmin && openId != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CakuAppBar(
+          title: 'Detail Permohonan',
+          showBack: true,
+          leading: IconButton(
+            tooltip: 'Kembali ke daftar',
+            onPressed: _closeDetail,
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+        ),
+        body: ApplicationReviewPanel(
+          applicationId: openId,
+          onReviewed: () => setState(() {}),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: CakuAppBar(
+        title: isAdmin ? 'Permohonan Admin' : 'Permohonan Menjadi Admin',
+        subtitle: isAdmin
+            ? 'Tinjau permohonan menjadi Admin'
+            : 'Ajukan dan pantau status permohonan',
+        showBack: true,
+      ),
+      body: isAdmin
+          ? _AdminApplicationList(onOpen: _openDetail)
+          : CustomerApplicationPanel(
+              onStatusChanged: (status) {
+                if (status != _myStatus) {
+                  setState(() => _myStatus = status);
+                }
+              },
+            ),
+    );
+  }
+}
+
+/// Daftar permohonan untuk admin: filter status + kartu pemohon.
+class _AdminApplicationList extends StatefulWidget {
+  const _AdminApplicationList({required this.onOpen});
+
+  final ValueChanged<int> onOpen;
+
+  @override
+  State<_AdminApplicationList> createState() => _AdminApplicationListState();
+}
+
+class _AdminApplicationListState extends State<_AdminApplicationList> {
   static const List<String?> _filters = [
     null,
     'pending',
@@ -71,47 +143,32 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
     _load();
   }
 
-  Future<void> _openDetail(Map<String, dynamic> item) async {
-    final id = (item['id_user'] as num?)?.toInt();
-    if (id == null) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => AdminApplicationDetailScreen(applicationId: id),
-      ),
-    );
-    if (mounted) await _load();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const CakuAppBar(title: 'Permohonan Admin', showBack: true),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 46,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screen,
-                vertical: AppSpacing.xs,
-              ),
-              children: [
-                for (final status in _filters)
-                  CategoryChip(
-                    label: status == null
-                        ? 'Semua'
-                        : ApplicationStatusBadge.labelFor(status),
-                    selected: _status == status,
-                    onTap: () => _selectStatus(status),
-                  ),
-              ],
+    return Column(
+      children: [
+        SizedBox(
+          height: 46,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screen,
+              vertical: AppSpacing.xs,
             ),
+            children: [
+              for (final status in _filters)
+                CategoryChip(
+                  label: status == null
+                      ? 'Semua'
+                      : ApplicationStatusBadge.labelFor(status),
+                  selected: _status == status,
+                  onTap: () => _selectStatus(status),
+                ),
+            ],
           ),
-          Expanded(child: _buildContent()),
-        ],
-      ),
+        ),
+        Expanded(child: _buildContent()),
+      ],
     );
   }
 
@@ -152,7 +209,10 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
               email: item['email']?.toString() ?? '',
               tanggal: Formatters.parseDate(item['admin_application_date']),
               status: item['admin_application_status']?.toString(),
-              onTap: () => _openDetail(item),
+              onTap: () {
+                final id = (item['id_user'] as num?)?.toInt();
+                if (id != null) widget.onOpen(id);
+              },
             ),
           );
         },
