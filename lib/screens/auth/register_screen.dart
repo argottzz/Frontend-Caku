@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_buttons.dart';
+import '../../widgets/feedback_dialog.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/state_views.dart';
 import 'auth_shell.dart';
@@ -67,10 +68,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _banner = error.message;
       });
       _formKey.currentState?.validate();
+      showFeedbackDialog(
+        context,
+        title: 'Pendaftaran gagal',
+        message: error.message,
+        success: false,
+        actionLabel: 'Coba lagi',
+      );
     } catch (error) {
       if (!mounted) return;
-      setState(() => _banner = 'Terjadi kesalahan. Silakan coba lagi.');
+      const message = 'Terjadi kesalahan. Silakan coba lagi.';
+      setState(() => _banner = message);
       debugPrint('Register error: $error');
+      showFeedbackDialog(
+        context,
+        title: 'Pendaftaran gagal',
+        message: message,
+        success: false,
+        actionLabel: 'Coba lagi',
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }

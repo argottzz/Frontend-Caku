@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_buttons.dart';
+import '../../widgets/forest_pattern.dart';
 
-/// Layar onboarding CAKU (3 halaman) sesuai design.md.
+/// Layar onboarding CAKU (3 halaman) sesuai `desain.md`.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -76,6 +77,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         total: _pages.length,
         onSkip: _finish,
         onNext: _next,
+        onBack: () => _controller.previousPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        ),
       );
     }
     return _BoxedOnboarding(
@@ -98,6 +103,7 @@ class _FullBleedOnboarding extends StatelessWidget {
     required this.total,
     required this.onSkip,
     required this.onNext,
+    required this.onBack,
   });
 
   final _OnboardingPage page;
@@ -105,10 +111,16 @@ class _FullBleedOnboarding extends StatelessWidget {
   final int total;
   final VoidCallback onSkip;
   final VoidCallback onNext;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
+    // Hero lebih tinggi dari 54% (desain) tetapi tidak melewati 60% agar ruang
+    // teks + CTA tetap lapang di layar pendek.
+    final heroHeight = height * 0.58;
+    final topInset = MediaQuery.of(context).padding.top;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -117,7 +129,7 @@ class _FullBleedOnboarding extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            height: height * 0.54,
+            height: heroHeight,
             child: Image.asset(
               page.image,
               fit: BoxFit.cover,
@@ -127,46 +139,76 @@ class _FullBleedOnboarding extends StatelessWidget {
                 alignment: Alignment.center,
                 child: const Icon(
                   Icons.terrain_rounded,
-                  color: AppColors.gray,
+                  color: AppColors.textSecondary,
                   size: 48,
                 ),
               ),
             ),
           ),
+          // Overlay pinus: menggelapkan bawah foto agar teks putih dan transisi
+          // ke latar mint terbaca tanpa kehilangan nuansa hutan.
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: height * 0.54,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, AppColors.background],
+            height: heroHeight + AppSpacing.xxl,
+            child: IgnorePointer(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0, 0.45, 0.72, 0.88, 1],
+                    colors: [
+                      Color(0x5910241F),
+                      Color(0x2610241F),
+                      Color(0xB310241F),
+                      Color(0xE6DCEBE6),
+                      AppColors.background,
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
+          const Positioned.fill(
+            child: IgnorePointer(
+              child: ForestPattern(color: AppColors.forest, opacity: 0.05),
+            ),
+          ),
+          // Bar aksi atas: kembali (halaman 2 ke atas) di kiri, lewatkan di kanan.
           Positioned(
-            top: AppSpacing.sm,
+            top: topInset + AppSpacing.sm,
+            left: AppSpacing.screen,
             right: AppSpacing.screen,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: TextButton(
-                onPressed: onSkip,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.xs,
+            child: Row(
+              children: [
+                if (index > 0)
+                  _CircleTopButton(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip: 'Kembali',
+                    onTap: onBack,
+                  ),
+                const Spacer(),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: TextButton(
+                    onPressed: onSkip,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.forest,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.xs,
+                      ),
+                      minimumSize: const Size(44, 36),
+                    ),
+                    child: const Text('Lewatkan'),
                   ),
                 ),
-                child: const Text('Lewatkan'),
-              ),
+              ],
             ),
           ),
           Align(
@@ -186,18 +228,20 @@ class _FullBleedOnboarding extends StatelessWidget {
                       title: page.title,
                       keyword: page.keyword,
                     ),
-                    const SizedBox(height: AppSpacing.sm + 4),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       page.body,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: AppColors.textSecondary,
+                            height: 1.6,
                           ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     _Dots(index: index, total: total),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.xxl),
                     PrimaryButton(
+                      // Teks sama persis dengan CTA halaman 2.
                       label: 'Lanjut',
                       onPressed: onNext,
                     ),
@@ -207,6 +251,39 @@ class _FullBleedOnboarding extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Tombol lingkaran kecil di atas hero (tombol kembali halaman 1–2).
+class _CircleTopButton extends StatelessWidget {
+  const _CircleTopButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.white.withValues(alpha: 0.92),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 20, color: AppColors.forest),
+          ),
+        ),
       ),
     );
   }
@@ -255,7 +332,7 @@ class _BoxedOnboarding extends StatelessWidget {
                               alignment: Alignment.center,
                               child: const Icon(
                                 Icons.terrain_rounded,
-                                color: AppColors.gray,
+                                color: AppColors.textSecondary,
                                 size: 48,
                               ),
                             ),
@@ -281,7 +358,7 @@ class _BoxedOnboarding extends StatelessWidget {
               ),
               _Dots(index: index, total: total),
               const SizedBox(height: AppSpacing.xl),
-              AccentButton(
+              PrimaryButton(
                 label: 'Mulai',
                 onPressed: onFinish,
               ),
@@ -380,52 +457,4 @@ class _OnboardingPage {
   final String body;
   final String image;
   final bool fullBleed;
-}
-
-/// Accent pill button (Coral Ember) untuk CTA sorotan.
-class AccentButton extends StatelessWidget {
-  const AccentButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.loading = false,
-    this.expand = true,
-  });
-
-  final String label;
-  final VoidCallback? onPressed;
-  final bool loading;
-  final bool expand;
-
-  @override
-  Widget build(BuildContext context) {
-    final button = FilledButton(
-      onPressed: loading ? null : onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: AppColors.orange,
-        foregroundColor: AppColors.textOnOrange,
-        disabledBackgroundColor: AppColors.disabledSurface,
-        disabledForegroundColor: AppColors.disabledText,
-        minimumSize: const Size(44, 50),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-      ),
-      child: loading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.2,
-                color: AppColors.textOnOrange,
-              ),
-            )
-          : Text(label),
-    );
-
-    return expand
-        ? SizedBox(width: double.infinity, height: 50, child: button)
-        : SizedBox(height: 50, child: button);
-  }
 }
