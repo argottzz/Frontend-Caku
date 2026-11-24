@@ -104,7 +104,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
     } catch (error) {
       debugPrint('Daftar barang error: $error');
       if (!mounted) return;
-      if (reset) setState(() => _error = 'Terjadi kesalahan saat memuat barang.');
+      if (reset) {
+        setState(() => _error = 'Terjadi kesalahan saat memuat barang.');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -135,9 +137,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
 
   Future<void> _openForm({Item? item}) async {
     final changed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => ItemFormScreen(item: item),
-      ),
+      MaterialPageRoute<bool>(builder: (_) => ItemFormScreen(item: item)),
     );
     if (changed == true && mounted) {
       await _loadItems(reset: true);
@@ -274,9 +274,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
             ? 'Tambahkan barang pertama menggunakan tombol di bawah.'
             : 'Coba kata kunci lain atau ubah kategori.',
         actionLabel: _searchController.text.isEmpty ? 'Tambah barang' : null,
-        onAction: _searchController.text.isEmpty
-            ? () => _openForm()
-            : null,
+        onAction: _searchController.text.isEmpty ? () => _openForm() : null,
       );
     }
 
@@ -298,9 +296,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
             ],
             if (_hasNext)
               TextButton.icon(
-                onPressed: _loadingMore
-                    ? null
-                    : () => _loadItems(reset: false),
+                onPressed: _loadingMore ? null : () => _loadItems(reset: false),
                 icon: _loadingMore
                     ? const SizedBox(
                         width: 16,
@@ -375,10 +371,9 @@ class _AdminItemCard extends StatelessWidget {
                   item.nama,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 15,
-                    height: 1.25,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontSize: 15, height: 1.25),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
