@@ -13,6 +13,7 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.showBack = false,
     this.bottom,
+    this.transparent = false,
   });
 
   final String title;
@@ -21,13 +22,19 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
   final PreferredSizeWidget? bottom;
 
+  /// Latar transparan untuk app bar di atas header bergambar.
+  final bool transparent;
+
   @override
   Size get preferredSize =>
       Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
+    final foreground = transparent ? AppColors.white : AppColors.textPrimary;
     return AppBar(
+      backgroundColor: transparent ? Colors.transparent : AppColors.background,
+      foregroundColor: foreground,
       automaticallyImplyLeading: showBack,
       leading: showBack
           ? null
@@ -46,20 +53,22 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
-              color: AppColors.textPrimary,
+              letterSpacing: 0.2,
+              color: foreground,
             ),
           ),
           if (subtitle != null)
             Text(
               subtitle!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: transparent
+                    ? AppColors.sageLight
+                    : AppColors.textSecondary,
               ),
             ),
         ],

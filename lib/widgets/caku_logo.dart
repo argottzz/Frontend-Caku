@@ -39,7 +39,7 @@ class CakuLogo extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.sageLight),
       ),
       child: image,
     );
