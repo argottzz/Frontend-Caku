@@ -117,10 +117,8 @@ Catatan penting:
 - Login admin & customer → `200` + `token` + `data.role`.
 - Data Aiven melalui API: 5 kategori, 0 item, 0 rental; ringkasan laporan nol.
 - Customer → `GET /reports/summary` → `403`.
-- **Railway `https://backend-caku-production.up.railway.app` belum melayani
-  aplikasi**: seluruh path (termasuk `/api/health`) dibalas `404` oleh edge
-  Railway dengan header `x-railway-fallback: true` dan body
-  `{"status":"error","code":404,"message":"Application not found"}`.
-  Artinya hostname tidak terhubung ke service yang berjalan — bukan 404 Express.
-  Perlu tindakan pemilik Railway (status deployment/domain), bukan perubahan
-  kode frontend.
+- **Railway `https://backend-caku-production.up.railway.app` aktif dan sehat**:
+  `GET /api/health` → `200 {"success":true,"message":"Server berjalan"}`.
+  Path di luar `/api` (mis. `/` atau `/health`) memang `404` karena Express
+  hanya memasang route di bawah `/api` — itu perilaku normal, bukan deployment
+  mati. `GET /api/categories` tanpa token → `401`, sesuai harapan.
