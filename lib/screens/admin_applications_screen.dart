@@ -32,64 +32,83 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
   /// Permohonan yang sedang ditinjau admin; `null` berarti daftar.
   int? _openId;
 
-  /// Status terakhir milik customer (dipakai untuk judul tab).
-  String _myStatus = 'none';
+  /// Dinaikkan setiap kali review selesai agar daftar memuat ulang tanpa
+  /// membuang filter dan posisi gulir yang sudah dipilih admin.
+  int _listEpoch = 0;
 
   void _openDetail(int id) => setState(() => _openId = id);
 
   void _closeDetail() => setState(() => _openId = null);
 
+  void _reviewed() => setState(() => _listEpoch++);
+
   @override
   Widget build(BuildContext context) {
     final isAdmin = AuthScope.of(context).isAdmin;
-    final openId = _openId;
+    final openId = isAdmin ? _openId : null;
+    final showingDetail = openId != null;
 
-    if (isAdmin && openId != null) {
-      return Scaffold(
+    return PopScope(
+      // Back sistem saat detail terbuka harus kembali ke daftar, bukan
+      // menutup seluruh halaman.
+      canPop: !showingDetail,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && showingDetail) _closeDetail();
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: CakuAppBar(
-          title: 'Detail Permohonan',
-          showBack: true,
-          leading: IconButton(
-            tooltip: 'Kembali ke daftar',
-            onPressed: _closeDetail,
-            icon: const Icon(Icons.arrow_back_rounded),
-          ),
-        ),
-        body: ApplicationReviewPanel(
-          applicationId: openId,
-          onReviewed: () => setState(() {}),
-        ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CakuAppBar(
-        title: isAdmin ? 'Permohonan Admin' : 'Permohonan Menjadi Admin',
-        subtitle: isAdmin
-            ? 'Tinjau permohonan menjadi Admin'
-            : 'Ajukan dan pantau status permohonan',
-        showBack: true,
+        appBar: showingDetail
+            ? CakuAppBar(
+                title: 'Detail Permohonan',
+                showBack: true,
+                leading: IconButton(
+                  tooltip: 'Kembali ke daftar',
+                  onPressed: _closeDetail,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
+              )
+            : CakuAppBar(
+                title: isAdmin
+                    ? 'Permohonan Admin'
+                    : 'Permohonan Menjadi Admin',
+                subtitle: isAdmin
+                    ? 'Tinjau permohonan menjadi Admin'
+                    : 'Ajukan dan pantau status permohonan',
+                showBack: true,
+              ),
+        // IndexedStack menjaga daftar tetap hidup saat detail dibuka,
+        // sehingga filter status dan posisi gulir tidak hilang.
+        body: isAdmin
+            ? IndexedStack(
+                index: showingDetail ? 1 : 0,
+                children: [
+                  _AdminApplicationList(
+                    onOpen: _openDetail,
+                    refreshToken: _listEpoch,
+                  ),
+                  if (showingDetail)
+                    ApplicationReviewPanel(
+                      applicationId: openId,
+                      onReviewed: _reviewed,
+                    )
+                  else
+                    const SizedBox.shrink(),
+                ],
+              )
+            : const CustomerApplicationPanel(),
       ),
-      body: isAdmin
-          ? _AdminApplicationList(onOpen: _openDetail)
-          : CustomerApplicationPanel(
-              onStatusChanged: (status) {
-                if (status != _myStatus) {
-                  setState(() => _myStatus = status);
-                }
-              },
-            ),
     );
   }
 }
 
 /// Daftar permohonan untuk admin: filter status + kartu pemohon.
 class _AdminApplicationList extends StatefulWidget {
-  const _AdminApplicationList({required this.onOpen});
+  const _AdminApplicationList({required this.onOpen, this.refreshToken = 0});
 
   final ValueChanged<int> onOpen;
+
+  /// Berubah saat review selesai; daftar memuat ulang tanpa dibangun ulang.
+  final int refreshToken;
 
   @override
   State<_AdminApplicationList> createState() => _AdminApplicationListState();
@@ -112,6 +131,12 @@ class _AdminApplicationListState extends State<_AdminApplicationList> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AdminApplicationList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshToken != widget.refreshToken) _load();
   }
 
   Future<void> _load() async {
