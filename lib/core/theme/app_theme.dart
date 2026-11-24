@@ -15,25 +15,25 @@ abstract final class AppSpacing {
 
   static const double screen = 20;
   static const double section = 20;
-  static const double labelGap = 6;
+  static const double labelGap = 8;
   static const double card = 16;
   static const double listItem = 12;
   static const double grid = 12;
   static const double formField = 16;
   static const double inline = 8;
-  static const double bottomClearance = 100; // scroll clearance layar utama
+  static const double bottomClearance = 116; // scroll clearance layar utama
 }
 
-/// Radius sudut yang konsisten.
+/// Radius sudut yang konsisten (desain.md §5).
 abstract final class AppRadius {
-  static const double sm = 8; // status pill / badge
-  static const double md = 14; // boxed text input
-  static const double lg = 16; // card / container utama
+  static const double sm = 8; // badge / chip kecil
+  static const double md = 12; // input & tombol
+  static const double lg = 16; // kartu & panel
   static const double chip = 12; // filter chip
-  static const double nav = 22; // floating bottom nav
-  static const double button = 25; // pill button
-  static const double modal = 24; // modal & feedback popup
-  static const double pill = 999;
+  static const double nav = 20; // floating bottom nav
+  static const double button = 12; // tombol
+  static const double modal = 20; // modal & feedback popup
+  static const double pill = 999; // hanya untuk kontrol berbentuk kapsul
 }
 
 abstract final class AppTheme {
@@ -48,8 +48,8 @@ abstract final class AppTheme {
         seedColor: AppColors.forest,
         primary: AppColors.forest,
         onPrimary: AppColors.white,
-        secondary: AppColors.orange,
-        onSecondary: AppColors.textOnOrange,
+        secondary: AppColors.moss,
+        onSecondary: AppColors.white,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
@@ -68,11 +68,19 @@ abstract final class AppTheme {
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
-          headlineLarge: const TextStyle(
+          displaySmall: const TextStyle(
             fontSize: 20,
             height: 1.30,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
+            color: AppColors.textPrimary,
+            fontFamily: fontFamily,
+          ),
+          headlineLarge: const TextStyle(
+            fontSize: 22,
+            height: 1.28,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
             color: AppColors.textPrimary,
             fontFamily: fontFamily,
           ),
@@ -149,6 +157,7 @@ abstract final class AppTheme {
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
           fontSize: 16,
@@ -157,12 +166,14 @@ abstract final class AppTheme {
           fontFamily: fontFamily,
         ),
       ),
+      // Isian lembut: fill Surface Soft tanpa border tegas; border hanya
+      // muncul saat fokus (Primary) dan saat error.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.mist,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 16,
         ),
         hintStyle: const TextStyle(
           color: AppColors.textSecondary,
@@ -180,11 +191,11 @@ abstract final class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -210,7 +221,7 @@ abstract final class AppTheme {
           foregroundColor: AppColors.textOnDark,
           disabledBackgroundColor: AppColors.disabledSurface,
           disabledForegroundColor: AppColors.disabledText,
-          minimumSize: const Size(0, 50),
+          minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           textStyle: const TextStyle(
             fontSize: 15,
@@ -226,7 +237,7 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.forest,
-          minimumSize: const Size(0, 50),
+          minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           textStyle: const TextStyle(
             fontSize: 15,
@@ -234,7 +245,7 @@ abstract final class AppTheme {
             letterSpacing: 0.2,
             fontFamily: fontFamily,
           ),
-          side: const BorderSide(color: AppColors.forest, width: 1.5),
+          side: const BorderSide(color: AppColors.border, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
           ),
@@ -259,18 +270,20 @@ abstract final class AppTheme {
           side: const BorderSide(color: AppColors.border),
         ),
       ),
+      // Permukaan kartu/sheet mengikuti Surface, bukan abu netral Material.
+      canvasColor: AppColors.surface,
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
         thickness: 1,
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: Colors.transparent,
+        indicatorColor: AppColors.forestSurface,
         height: 64,
         elevation: 6,
-        shadowColor: Color(0x1A1E2621),
+        shadowColor: Color(0x1A17322E),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
@@ -295,7 +308,7 @@ abstract final class AppTheme {
       ),
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: AppColors.surface,
-        selectedColor: AppColors.forest,
+        selectedColor: AppColors.moss,
         side: const BorderSide(color: AppColors.border),
         labelStyle: const TextStyle(
           fontSize: 13,
@@ -312,7 +325,7 @@ abstract final class AppTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.nearBlack,
+        backgroundColor: AppColors.textPrimary,
         contentTextStyle: const TextStyle(
           color: AppColors.white,
           fontFamily: fontFamily,
@@ -323,10 +336,21 @@ abstract final class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.modal),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        dragHandleColor: AppColors.border,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.modal),
+          ),
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
