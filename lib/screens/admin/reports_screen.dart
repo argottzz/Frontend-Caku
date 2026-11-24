@@ -7,8 +7,9 @@ import '../../core/utils/formatters.dart';
 import '../../models/rental.dart';
 import '../../models/report.dart';
 import '../../state/app_scope.dart';
-import '../../widgets/caku_app_bar.dart';
+import '../../widgets/app_snack.dart';
 import '../../widgets/form_widgets.dart';
+import '../../widgets/forest_header.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
@@ -98,9 +99,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (reset) {
         setState(() => _error = error.message);
       } else {
-        ScaffoldMessenger.maybeOf(
-          context,
-        )?.showSnackBar(SnackBar(content: Text(error.message)));
+        AppSnack.error(context, error.message);
       }
     } catch (error) {
       debugPrint('Laporan error: $error');
@@ -202,10 +201,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final summary = _data?.ringkasan ?? ReportSummary.empty;
 
     return Scaffold(
-      appBar: const CakuAppBar(
-        title: 'Laporan Pendapatan',
-        subtitle: 'Rekap transaksi dan pendapatan',
-      ),
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: () => _load(reset: true),
         color: AppColors.forest,
@@ -213,6 +209,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           children: [
+            Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+              child: const ForestHeader(
+                height: 168,
+                eyebrow: 'CAKU Admin',
+                title: 'Laporan Pendapatan',
+                subtitle: 'Rekap transaksi dan pendapatan',
+              ),
+            ),
             StatusFilterBar(selected: _status, onSelect: _selectStatus),
             ResponsiveFrame(
               maxWidth: 960,
@@ -448,7 +453,7 @@ class _DateChip extends StatelessWidget {
             Icon(
               Icons.calendar_month_rounded,
               size: 16,
-              color: value == null ? AppColors.gray : AppColors.forest,
+              color: value == null ? AppColors.textSecondary : AppColors.forest,
             ),
             const SizedBox(width: AppSpacing.xs + 2),
             Text(
@@ -471,7 +476,7 @@ class _DateChip extends StatelessWidget {
                 child: const Icon(
                   Icons.close_rounded,
                   size: 16,
-                  color: AppColors.gray,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],

@@ -11,14 +11,17 @@ import '../../models/item.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
+import '../../widgets/category_strip.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/item_image.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
-import 'categories_screen.dart';
 import 'item_form_screen.dart';
 
 /// Daftar barang admin: cari, filter kategori, tambah, ubah, hapus.
+///
+/// Kategori hanya bisa dibaca dari API (tidak ada CRUD kategori), sehingga
+/// layar ini tidak menyediakan pengelolaan kategori.
 class ItemsScreen extends StatefulWidget {
   const ItemsScreen({super.key});
 
@@ -216,49 +219,16 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Kategori & stok',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const CategoriesScreen(),
-                          ),
-                        ),
-                        icon: const Icon(Icons.category_outlined, size: 18),
-                        label: const Text('Kelola Kategori'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (_categories.isNotEmpty)
-                    SizedBox(
-                      height: 42,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          _CategoryPill(
-                            label: 'Semua',
-                            selected: _categoryId == null,
-                            onTap: () => _selectCategory(null),
-                          ),
-                          ..._categories.map(
-                            (category) => _CategoryPill(
-                              label: category.nama,
-                              selected: _categoryId == category.id,
-                              onTap: () => _selectCategory(category.id),
-                            ),
-                          ),
-                        ],
-                      ),
+                  if (_categories.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    CategoryStrip(
+                      categories: _categories,
+                      selectedId: _categoryId,
+                      padding: EdgeInsets.zero,
+                      onSelect: _selectCategory,
                     ),
-                  const SizedBox(height: AppSpacing.sm),
+                  ],
+                  const SizedBox(height: AppSpacing.md),
                   SectionHeader(
                     title: 'Daftar barang',
                     subtitle: _loading
@@ -394,13 +364,13 @@ class _AdminItemCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 9.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    color: AppColors.accentText,
+                    letterSpacing: 0.4,
+                    color: AppColors.moss,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   item.nama,
                   maxLines: 2,
@@ -414,14 +384,15 @@ class _AdminItemCard extends StatelessWidget {
                 Text(
                   '${Formatters.rupiah(item.hargaSewaHarian)}/hari',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.forest,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Stok: ${item.stok} • Denda ${Formatters.rupiah(item.dendaHarian)}/hari',
+                  'Stok ${item.stok} · Denda '
+                  '${Formatters.rupiah(item.dendaHarian)}/hari',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -446,51 +417,6 @@ class _AdminItemCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CategoryPill extends StatelessWidget {
-  const _CategoryPill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm),
-      child: Material(
-        color: selected ? AppColors.forest : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: selected ? AppColors.forest : AppColors.border,
-              ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.white : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
