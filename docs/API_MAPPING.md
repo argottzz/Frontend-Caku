@@ -70,6 +70,8 @@ Catatan penting:
 | Detail sewa | `GET /rentals/:id` | Termasuk `items[]`, `total_bayar`, `total_denda`. |
 | Batalkan pengajuan | `DELETE /rentals/:id` | Hanya status `pending`. |
 | Profil | `GET /auth/me` | Hanya baca; tidak ada endpoint ubah profil. |
+| Ajukan jadi admin | `POST /admin-applications` | Form permohonan dari Profil. |
+| Status permohonan | `GET /admin-applications/me` | Ditampilkan di Profil. |
 
 ### Admin
 
@@ -83,6 +85,9 @@ Catatan penting:
 | Hapus barang | `DELETE /items/:id` | `409` bila sudah dipakai rental. |
 | Proses rental | `GET /rentals` + `PATCH /rentals/:id/status` | Urutan: pending→approved→ongoing; pending→rejected. |
 | Pengembalian | `POST /rentals/:id/return` | Hanya status `ongoing`; stok dikembalikan otomatis. |
+| Permohonan admin | `GET /admin-applications` | Filter status di klien setelah data dimuat. |
+| Detail permohonan | `GET /admin-applications/:id` | Data pemohon + status. |
+| Setujui/tolak | `PATCH /admin-applications/:id/approve\|reject` | Tanpa alasan; kontrak hanya menerima aksi. |
 | Profil | `GET /auth/me` | Hanya baca. |
 
 ## Gap yang terdokumentasi (bukan bug frontend)
@@ -90,15 +95,20 @@ Catatan penting:
 1. **Keranjang** – tidak ada endpoint cart. Keranjang disimpan di aplikasi dan
    dikirim sebagai `items[]` saat checkout.
 2. **CRUD kategori** – backend hanya menyediakan `GET /categories`. Tidak ada
-   create/update/delete kategori, jadi tidak ada layar admin kategori.
-3. **Ubah profil** – tidak ada endpoint update user/profil. Layar profil hanya
-   menampilkan data `GET /auth/me`.
+   create/update/delete kategori, jadi kategori hanya tampil sebagai filter
+   (Beranda, Katalog, daftar barang admin) tanpa layar pengelolaan.
+3. **Ubah profil & ubah password** – tidak ada endpoint update user/profil
+   maupun ganti password. Layar Profil hanya menampilkan data `GET /auth/me`;
+   entri Edit Profil dan Ubah Password dihapus agar tidak ada aksi tanpa
+   dukungan backend (`desain.md` §8.11–8.12).
 4. **Alasan penolakan** – `PATCH /rentals/:id/status` hanya menerima `status`.
    Tidak ada field alasan; dialog penolakan tidak meminta alasan.
 5. **Nomor rekening tujuan transfer** – tidak ada di kontrak API. Instruksi
    pembayaran tidak menampilkan nomor rekening karangan.
-6. **Admin applications** – endpoint tersedia tetapi di luar cakupan UI yang
-   disepakati; tidak dibuatkan layar.
+6. **Admin applications** – didukung penuh oleh backend dan sudah dipakai:
+   customer mengajukan lewat Profil (`POST /admin-applications`), admin
+   meninjau di layar Permohonan Admin (`GET /admin-applications`,
+   `PATCH .../approve|reject`).
 7. **Daftar pengguna** – tidak ada endpoint users; admin tidak dapat mengelola akun.
 
 ## Status verifikasi
