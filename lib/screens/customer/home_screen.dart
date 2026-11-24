@@ -96,9 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openCart() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const CartScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
   }
 
   @override
@@ -185,11 +185,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGrid() {
     if (_loading) {
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+      return ItemGrid(
         itemCount: _previewCount,
-        gridDelegate: itemGridDelegate,
         itemBuilder: (_, _) => const ItemCardSkeleton(),
       );
     }
@@ -208,11 +205,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return ItemGrid(
       itemCount: _items.length,
-      gridDelegate: itemGridDelegate,
       itemBuilder: (context, index) {
         final item = _items[index];
         return ItemCard(
@@ -247,11 +241,7 @@ class _SearchTrigger extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.search_rounded,
-                color: AppColors.moss,
-                size: 21,
-              ),
+              const Icon(Icons.search_rounded, color: AppColors.moss, size: 21),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -259,9 +249,9 @@ class _SearchTrigger extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w400,
-                      ),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
             ],
@@ -309,9 +299,9 @@ class _PickupNote extends StatelessWidget {
                 Text(
                   'Ambil langsung di lokasi',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(

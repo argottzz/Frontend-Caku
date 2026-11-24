@@ -188,9 +188,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   void _openCart() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const CartScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
   }
 
   Future<void> _openDetail(Item item) async {
@@ -216,7 +216,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                ),
                 child: ForestHeader(
                   height: 168,
                   eyebrow: 'Katalog CAKU',
@@ -317,11 +319,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
         SliverPadding(
           padding: const EdgeInsets.all(AppSpacing.screen),
           sliver: SliverToBoxAdapter(
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+            child: ItemGrid(
               itemCount: 6,
-              gridDelegate: itemGridDelegate,
               itemBuilder: (_, _) => const ItemCardSkeleton(),
             ),
           ),
@@ -360,11 +359,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
       SliverPadding(
         padding: const EdgeInsets.all(AppSpacing.screen),
         sliver: SliverToBoxAdapter(
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          child: ItemGrid(
             itemCount: items.length,
-            gridDelegate: itemGridDelegate,
             itemBuilder: (context, index) {
               final item = items[index];
               return ItemCard(
@@ -501,9 +497,7 @@ class _SortButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: active ? AppColors.moss : AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: active ? AppColors.moss : AppColors.border,
-          ),
+          border: Border.all(color: active ? AppColors.moss : AppColors.border),
         ),
         child: Icon(
           Icons.tune_rounded,

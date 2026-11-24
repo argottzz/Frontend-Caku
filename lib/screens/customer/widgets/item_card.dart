@@ -7,22 +7,68 @@ import '../../../models/item.dart';
 import '../../../widgets/item_image.dart';
 import '../../../widgets/status_badge.dart';
 
-/// Grid dua kolom bersama untuk Beranda dan Katalog, sehingga tinggi kartu
-/// produk selalu identik di kedua layar.
-const SliverGridDelegateWithFixedCrossAxisCount itemGridDelegate =
-    SliverGridDelegateWithFixedCrossAxisCount(
-  crossAxisCount: 2,
-  crossAxisSpacing: AppSpacing.md,
-  mainAxisSpacing: AppSpacing.md,
-  mainAxisExtent: 292,
-);
+/// Tinggi area teks di bawah foto, diukur dari isi kartu: padding 12+12,
+/// label kategori 17, jarak 4, nama dua baris 36, harga 23, jarak 8, dan
+/// badge stok 17 = 137, ditambah sedikit kelonggaran pembulatan subpiksel.
+const double _itemCardTextHeight = 140;
+
+/// Lebar kartu yang nyaman dibaca; jumlah kolom dihitung dari angka ini.
+const double _itemCardTargetWidth = 200;
+
+/// Grid produk bersama untuk Beranda dan Katalog, sehingga tinggi kartu selalu
+/// identik di kedua layar.
+///
+/// Tinggi kartu dihitung dari lebar kolom, bukan angka tetap. Foto memakai
+/// AspectRatio 4:3 sehingga tingginya ikut melebar; dengan tinggi tetap, layar
+/// lebar menyisakan ruang teks terlalu kecil dan kartu overflow.
+///
+/// [gridWidth] adalah lebar area grid setelah padding layar.
+/// [textScaler] dipakai agar kartu ikut meninggi saat ukuran teks diperbesar.
+SliverGridDelegateWithFixedCrossAxisCount itemGridDelegateFor(
+  double gridWidth, {
+  TextScaler textScaler = TextScaler.noScaling,
+}) {
+  final columns = (gridWidth / _itemCardTargetWidth).round().clamp(2, 8);
+  final columnWidth = (gridWidth - AppSpacing.md * (columns - 1)) / columns;
+  return SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: columns,
+    crossAxisSpacing: AppSpacing.md,
+    mainAxisSpacing: AppSpacing.md,
+    mainAxisExtent: columnWidth * 3 / 4 + textScaler.scale(_itemCardTextHeight),
+  );
+}
+
+/// Grid produk yang menyesuaikan jumlah kolom dan tinggi kartu dengan lebar
+/// area yang tersedia (lihat [itemGridDelegateFor]).
+class ItemGrid extends StatelessWidget {
+  const ItemGrid({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+  });
+
+  final int itemCount;
+  final NullableIndexedWidgetBuilder itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: itemCount,
+        gridDelegate: itemGridDelegateFor(
+          constraints.maxWidth,
+          textScaler: MediaQuery.textScalerOf(context),
+        ),
+        itemBuilder: itemBuilder,
+      ),
+    );
+  }
+}
 
 class ItemCard extends StatelessWidget {
-  const ItemCard({
-    super.key,
-    required this.item,
-    required this.onTap,
-  });
+  const ItemCard({super.key, required this.item, required this.onTap});
 
   final Item item;
   final VoidCallback onTap;
