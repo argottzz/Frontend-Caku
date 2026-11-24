@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
@@ -10,6 +10,7 @@ import '../../state/cart_controller.dart';
 import '../../widgets/app_buttons.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
+import '../../widgets/date_field.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/image_source_field.dart';
 import '../../widgets/layout.dart';
@@ -243,7 +244,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       value: AuthScope.maybeOf(context)?.user?.nama ?? '-',
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    _DateField(
+                    DateField(
                       label: 'Tanggal Mulai',
                       value: _start,
                       placeholder: 'Pilih tanggal mulai',
@@ -251,8 +252,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       onTap: _pickStart,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    _DateField(
-                      label: 'Tanggal selesai',
+                    DateField(
+                      label: 'Tanggal Selesai',
                       value: _end,
                       placeholder: 'Pilih tanggal selesai',
                       error: _endError,
@@ -448,85 +449,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.placeholder,
-    required this.onTap,
-    this.error,
-  });
-
-  final String label;
-  final DateTime? value;
-  final String placeholder;
-  final VoidCallback onTap;
-  final String? error;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = error == null ? AppColors.border : AppColors.error;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FieldLabel(label: label, required: true),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: borderColor),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_month_rounded,
-                  size: 20,
-                  color: value == null ? AppColors.gray : AppColors.forest,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    value == null ? placeholder : Formatters.dateLong(value!),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: value == null
-                          ? FontWeight.w400
-                          : FontWeight.w600,
-                      color: value == null
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.expand_more_rounded,
-                  size: 20,
-                  color: AppColors.gray,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (error != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            error!,
-            style: const TextStyle(color: AppColors.error, fontSize: 12),
-          ),
-        ],
-      ],
     );
   }
 }
