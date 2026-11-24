@@ -6,11 +6,12 @@ import '../core/theme/app_theme.dart';
 import '../models/rental.dart';
 import '../state/app_scope.dart';
 import '../widgets/app_snack.dart';
-import '../widgets/caku_app_bar.dart';
+import '../widgets/forest_header.dart';
 import '../widgets/layout.dart';
 import '../widgets/rental_card.dart';
 import '../widgets/state_views.dart';
 import '../widgets/status_filter_bar.dart';
+import 'customer/cart_screen.dart';
 import 'rental_detail_screen.dart';
 
 /// Daftar transaksi sewa. Customer melihat miliknya sendiri; mode admin
@@ -108,12 +109,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CakuAppBar(
-        title: widget.adminMode ? 'Manajemen Transaksi' : 'Sewa Saya',
-        subtitle: widget.adminMode
-            ? 'Verifikasi dan proses pesanan'
-            : 'Pantau status pengajuan Anda',
-      ),
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: () => _load(reset: true),
         color: AppColors.forest,
@@ -121,6 +117,32 @@ class _RentalsScreenState extends State<RentalsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           children: [
+            Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+              child: ForestHeader(
+                height: 168,
+                eyebrow: 'CAKU',
+                title: widget.adminMode ? 'Manajemen Transaksi' : 'Sewa Saya',
+                subtitle: widget.adminMode
+                    ? 'Verifikasi dan proses pesanan'
+                    : 'Pantau status pengajuan Anda',
+                actions: [
+                  if (widget.adminMode)
+                    const Spacer()
+                  else
+                    ForestHeaderAction(
+                      icon: Icons.shopping_cart_outlined,
+                      tooltip: 'Keranjang',
+                      badgeCount: CartScope.of(context).totalQuantity,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const CartScreen(),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             StatusFilterBar(selected: _status, onSelect: _selectStatus),
             ResponsiveFrame(
               maxWidth: 720,

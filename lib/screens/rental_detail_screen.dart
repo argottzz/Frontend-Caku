@@ -276,52 +276,15 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         StatusBadge(status: rental.status),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      rental.status.description,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    // Instruksi mengikuti status, tepat di bawah status agar
+                    // tidak perlu dicari (desain.md §8.10).
+                    _StatusGuidance(rental: rental, isAdmin: isAdmin),
                     if (isAdmin) ...[
                       const Divider(height: AppSpacing.xl),
                       InfoRow(label: 'Penyewa', value: rental.namaUser),
                       InfoRow(label: 'Email', value: rental.emailUser),
                     ],
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                SummaryCard(
-                  title: 'Jadwal sewa',
-                  children: [
-                    InfoRow(
-                      label: 'Tanggal mulai',
-                      value: Formatters.dateLong(rental.tanggalMulai),
-                    ),
-                    InfoRow(
-                      label: 'Tanggal selesai',
-                      value: Formatters.dateLong(rental.tanggalSelesai),
-                    ),
-                    InfoRow(
-                      label: 'Durasi',
-                      value: '${rental.durasiHari} hari',
-                    ),
-                    if (rental.tanggalKembaliAktual != null)
-                      InfoRow(
-                        label: 'Kembali aktual',
-                        value: Formatters.dateLong(
-                          rental.tanggalKembaliAktual!,
-                        ),
-                      ),
-                    if (rental.kondisiPengembalian != null)
-                      InfoRow(
-                        label: 'Kondisi kembali',
-                        value: rental.kondisiPengembalian!,
-                      ),
-                    if (rental.hariTerlambat > 0)
-                      InfoRow(
-                        label: 'Keterlambatan',
-                        value: '${rental.hariTerlambat} hari',
-                        valueColor: AppColors.error,
-                      ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -371,6 +334,42 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                             ],
                           ),
                         ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SummaryCard(
+                  title: 'Jadwal sewa',
+                  children: [
+                    InfoRow(
+                      label: 'Tanggal mulai',
+                      value: Formatters.dateLong(rental.tanggalMulai),
+                    ),
+                    InfoRow(
+                      label: 'Tanggal selesai',
+                      value: Formatters.dateLong(rental.tanggalSelesai),
+                    ),
+                    InfoRow(
+                      label: 'Durasi',
+                      value: '${rental.durasiHari} hari',
+                    ),
+                    if (rental.tanggalKembaliAktual != null)
+                      InfoRow(
+                        label: 'Kembali aktual',
+                        value: Formatters.dateLong(
+                          rental.tanggalKembaliAktual!,
+                        ),
+                      ),
+                    if (rental.kondisiPengembalian != null)
+                      InfoRow(
+                        label: 'Kondisi kembali',
+                        value: rental.kondisiPengembalian!,
+                      ),
+                    if (rental.hariTerlambat > 0)
+                      InfoRow(
+                        label: 'Keterlambatan',
+                        value: '${rental.hariTerlambat} hari',
+                        valueColor: AppColors.error,
                       ),
                   ],
                 ),
@@ -444,6 +443,70 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Instruksi singkat sesuai status transaksi (`desain.md` §8.10).
+///
+/// Hanya memakai data yang benar-benar tersedia: tanggal mulai untuk status
+/// disetujui, tanpa mengarang alamat pengambilan atau menyatakan barang sudah
+/// diterima customer.
+class _StatusGuidance extends StatelessWidget {
+  const _StatusGuidance({required this.rental, required this.isAdmin});
+
+  final Rental rental;
+  final bool isAdmin;
+
+  @override
+  Widget build(BuildContext context) {
+    final (tone, icon, title, message) = switch (rental.status) {
+      RentalStatus.pending => (
+          NoticeTone.warning,
+          Icons.hourglass_top_rounded,
+          'Menunggu verifikasi',
+          isAdmin
+              ? 'Periksa bukti transfer, lalu setujui atau tolak pengajuan.'
+              : 'Pembayaran sedang diperiksa admin. Status akan berubah '
+                  'setelah diverifikasi.',
+        ),
+      RentalStatus.approved => (
+          NoticeTone.success,
+          Icons.storefront_outlined,
+          'Siap diambil di lokasi',
+          'Pembayaran sudah diverifikasi dan penyewaan disetujui. Silakan '
+              'datang ke lokasi penyewaan CAKU untuk mengambil barang pada '
+              '${Formatters.dateLong(rental.tanggalMulai)}. Barang tidak '
+              'dikirim ke alamat.',
+        ),
+      RentalStatus.ongoing => (
+          NoticeTone.info,
+          Icons.backpack_outlined,
+          'Masa sewa berjalan',
+          'Barang sudah diserahkan. Kembalikan paling lambat '
+              '${Formatters.dateLong(rental.tanggalSelesai)} agar tidak '
+              'dikenakan denda.',
+        ),
+      RentalStatus.completed => (
+          NoticeTone.success,
+          Icons.task_alt_rounded,
+          'Penyewaan selesai',
+          'Terima kasih sudah menyewa di CAKU. Transaksi ini sudah selesai.',
+        ),
+      RentalStatus.rejected => (
+          NoticeTone.error,
+          Icons.cancel_outlined,
+          'Pengajuan ditolak',
+          'Pengajuan ini tidak dapat diproses. Silakan hubungi admin atau '
+              'ajukan sewa baru.',
+        ),
+    };
+
+    return InlineNotice(
+      tone: tone,
+      icon: icon,
+      title: title,
+      message: message,
     );
   }
 }
