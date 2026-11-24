@@ -89,11 +89,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         children: [
           Padding(
             padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: const ForestHeader(
+            child: ForestHeader(
               height: 168,
               eyebrow: 'CAKU Admin',
               title: 'Dashboard',
               subtitle: 'Ringkasan dan laporan operasional CAKU',
+              actions: [
+                // Dashboard adalah tab di shell admin, tapi juga dibuka lewat
+                // rute dari Profil (menu Laporan). Saat dibuka sebagai rute,
+                // sediakan jalan kembali.
+                if (Navigator.of(context).canPop())
+                  ForestHeaderAction(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip: 'Kembali',
+                    onTap: () => Navigator.of(context).maybePop(),
+                  ),
+                const Spacer(),
+              ],
             ),
           ),
           _DashboardTabs(selected: _tab, onSelect: _selectTab),

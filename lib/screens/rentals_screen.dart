@@ -127,9 +127,15 @@ class _RentalsScreenState extends State<RentalsScreen> {
                     ? 'Verifikasi dan proses pesanan'
                     : 'Pantau status pengajuan Anda',
                 actions: [
-                  if (widget.adminMode)
-                    const Spacer()
-                  else
+                  if (widget.adminMode) ...[
+                    if (Navigator.of(context).canPop())
+                      ForestHeaderAction(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: 'Kembali',
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                    const Spacer(),
+                  ] else
                     ForestHeaderAction(
                       icon: Icons.shopping_cart_outlined,
                       tooltip: 'Keranjang',

@@ -18,7 +18,7 @@ abstract final class ApiConfig {
   static const String _androidDebugOrigin = 'http://10.0.2.2:8000';
   static const String _hostDebugOrigin = 'http://localhost:8000';
 
-  /// Base URL lengkap, termasuk akhiran `/api`. 
+  /// Base URL lengkap, termasuk akhiran `/api`.
   static String get baseUrl {
     final override = _override.trim();
     if (override.isNotEmpty) return normalize(override);

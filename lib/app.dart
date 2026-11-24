@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_theme.dart';
-import 'screens/auth/auth_screen.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/admin/admin_shell.dart';
 import 'screens/customer/customer_shell.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -123,7 +123,7 @@ class _RootGateState extends State<RootGate> {
         final auth = AuthScope.of(context);
         return switch (auth.status) {
           AuthStatus.initializing => const SplashScreen(),
-          AuthStatus.unauthenticated => const AuthScreen(),
+          AuthStatus.unauthenticated => const LoginScreen(),
           AuthStatus.authenticated =>
             auth.isAdmin ? const AdminShell() : const CustomerShell(),
         };

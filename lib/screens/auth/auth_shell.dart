@@ -16,12 +16,17 @@ class AuthShell extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.footer,
+    this.onBack,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final Widget? footer;
+
+  /// Tombol kembali di atas form. `null` berarti halaman ini bukan halaman
+  /// yang dibuka dari halaman lain, jadi tidak ada tombol yang tidak berefek.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +48,7 @@ class AuthShell extends StatelessWidget {
                       subtitle: subtitle,
                       footer: footer,
                       maxWidth: 480,
+                      onBack: onBack,
                       child: child,
                     ),
                   ),
@@ -68,6 +74,7 @@ class AuthShell extends StatelessWidget {
                       title: title,
                       subtitle: subtitle,
                       footer: footer,
+                      onBack: onBack,
                       child: child,
                     ),
                   ],
@@ -212,6 +219,7 @@ class _FormArea extends StatelessWidget {
     required this.child,
     this.footer,
     this.maxWidth = 480,
+    this.onBack,
   });
 
   final String title;
@@ -219,6 +227,7 @@ class _FormArea extends StatelessWidget {
   final Widget child;
   final Widget? footer;
   final double maxWidth;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +243,7 @@ class _FormArea extends StatelessWidget {
             title: title,
             subtitle: subtitle,
             footer: footer,
+            onBack: onBack,
             child: child,
           ),
         ),
@@ -249,18 +259,30 @@ class _FormContent extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.footer,
+    this.onBack,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final Widget? footer;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (onBack != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onBack,
+              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Kembali'),
+            ),
+          ),
         Text(title, style: Theme.of(context).textTheme.displayLarge),
         const SizedBox(height: AppSpacing.sm),
         Text(

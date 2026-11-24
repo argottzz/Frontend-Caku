@@ -173,9 +173,18 @@ class _ItemsScreenState extends State<ItemsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CakuAppBar(
+      appBar: CakuAppBar(
         title: 'Kelola barang',
         subtitle: 'Tambah, ubah, dan hapus perlengkapan',
+        // ItemsScreen adalah tab shell admin, tetapi juga dibuka sebagai rute
+        // dari aksi cepat dashboard; sediakan jalan kembali saat itu terjadi.
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                tooltip: 'Kembali',
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
