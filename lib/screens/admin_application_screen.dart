@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/formatters.dart';
 import '../data/admin_application_service.dart';
 import '../state/app_scope.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/caku_app_bar.dart';
+import '../widgets/form_widgets.dart';
 import '../widgets/layout.dart';
 import '../widgets/state_views.dart';
+import '../widgets/status_badge.dart';
 
 /// Form Pengajuan Admin (17). Textarea alasan pengajuan dihilangkan karena
 /// backend tidak menyimpannya.
@@ -59,14 +63,13 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
       if (!mounted) return;
       await _load();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pengajuan berhasil dikirim.')),
-      );
+      AppSnack.success(context, 'Pengajuan berhasil dikirim.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      AppSnack.error(context, error.message);
+    } catch (error) {
+      debugPrint('Ajukan admin error: $error');
+      if (mounted) AppSnack.error(context, 'Pengajuan gagal dikirim.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -93,15 +96,14 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: AppSpacing.sm),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.card),
-              child: Text(
+          SummaryCard(
+            children: [
+              Text(
                 'Sebagai Admin, Anda bertanggung jawab mengelola inventaris, '
                 'memverifikasi pembayaran, dan memproses transaksi.',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
-            ),
+            ],
           ),
           const SizedBox(height: AppSpacing.lg),
           FilledButton(
@@ -126,6 +128,14 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _StatusCard(status: status, application: _application),
+          const SizedBox(height: AppSpacing.lg),
+          const InlineNotice(
+            tone: NoticeTone.warning,
+            icon: Icons.hourglass_top_rounded,
+            title: 'Menunggu peninjauan',
+            message: 'Admin akan meninjau permohonan Anda. Status diperbarui '
+                'di halaman ini dan di Profil.',
+          ),
         ],
       );
     }
@@ -136,36 +146,30 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
         children: [
           _StatusCard(status: status, application: _application),
           const SizedBox(height: AppSpacing.lg),
-          const Text(
-            'Akun Anda telah disetujui sebagai Admin. '
-            'Silakan masuk ulang jika diperlukan.',
-            textAlign: TextAlign.center,
+          const InlineNotice(
+            tone: NoticeTone.success,
+            icon: Icons.verified_user_outlined,
+            title: 'Permohonan disetujui',
+            message: 'Akun Anda kini memiliki akses Admin. Masuk ulang jika '
+                'menu admin belum muncul.',
           ),
         ],
       );
     }
 
     // rejected
-    final reason = _application?['admin_rejection_reason'] as String?;
+    final reason = _application?['admin_rejection_reason']?.toString().trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _StatusCard(status: status, application: _application),
         if (reason != null && reason.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.lg),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.card),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Alasan Penolakan',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(reason, style: Theme.of(context).textTheme.bodyLarge),
-                ],
-              ),
-            ),
+          SummaryCard(
+            title: 'Alasan penolakan',
+            children: [
+              Text(reason, style: Theme.of(context).textTheme.bodyMedium),
+            ],
           ),
         ],
         const SizedBox(height: AppSpacing.lg),
@@ -195,57 +199,18 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = switch (status) {
-      'pending' => 'Menunggu',
-      'approved' => 'Disetujui',
-      'rejected' => 'Ditolak',
-      _ => status,
-    };
-    final color = switch (status) {
-      'pending' => AppColors.pendingText,
-      'approved' => AppColors.approvedText,
-      'rejected' => AppColors.rejectedText,
-      _ => AppColors.textSecondary,
-    };
-    final bg = switch (status) {
-      'pending' => AppColors.pendingBg,
-      'approved' => AppColors.approvedBg,
-      'rejected' => AppColors.rejectedBg,
-      _ => AppColors.surface,
-    };
-    final date = application?['admin_application_date']?.toString();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.card),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            if (date != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Text('Tanggal pengajuan: $date',
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ],
-        ),
-      ),
+    final date = Formatters.parseDate(application?['admin_application_date']);
+    return SummaryCard(
+      children: [
+        ApplicationStatusBadge(status: status, dense: false),
+        if (date != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Tanggal pengajuan: ${Formatters.dateLong(date)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
     );
   }
 }

@@ -1,14 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
-// data service accessed via AppScope
+import '../core/utils/formatters.dart';
 import '../state/app_scope.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/caku_app_bar.dart';
 import '../widgets/confirm_dialog.dart';
+import '../widgets/form_widgets.dart';
 import '../widgets/layout.dart';
 import '../widgets/state_views.dart';
+import '../widgets/status_badge.dart';
 
 /// Detail Permohonan Admin (27).
 class AdminApplicationDetailScreen extends StatefulWidget {
@@ -61,26 +64,25 @@ class _AdminApplicationDetailScreenState
 
   Future<void> _approve() async {
     final services = AppScope.read(context);
-    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showConfirmDialog(
       context,
       title: 'Setujui permohonan?',
       message: 'Pemohon akan menjadi Admin.',
       confirmLabel: 'Setujui',
     );
-    if (!confirmed) return;
+    if (!confirmed || !mounted) return;
     setState(() => _submitting = true);
     try {
-      await services.adminApplications.approve(
-        widget.applicationId,
-      );
+      await services.adminApplications.approve(widget.applicationId);
       if (!mounted) return;
+      AppSnack.success(context, 'Permohonan disetujui.');
       await _load();
     } on ApiException catch (error) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      AppSnack.error(context, error.message);
+    } catch (error) {
+      debugPrint('Setujui permohonan error: $error');
+      if (mounted) AppSnack.error(context, 'Permohonan gagal disetujui.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -88,22 +90,20 @@ class _AdminApplicationDetailScreenState
 
   Future<void> _reject() async {
     final services = AppScope.read(context);
-    final messenger = ScaffoldMessenger.of(context);
     final reason = await _showRejectDialog();
-    if (reason == null) return;
+    if (reason == null || !mounted) return;
     setState(() => _submitting = true);
     try {
-      await services.adminApplications.reject(
-        widget.applicationId,
-        reason,
-      );
+      await services.adminApplications.reject(widget.applicationId, reason);
       if (!mounted) return;
+      AppSnack.success(context, 'Permohonan ditolak.');
       await _load();
     } on ApiException catch (error) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      AppSnack.error(context, error.message);
+    } catch (error) {
+      debugPrint('Tolak permohonan error: $error');
+      if (mounted) AppSnack.error(context, 'Permohonan gagal ditolak.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -111,15 +111,16 @@ class _AdminApplicationDetailScreenState
 
   Future<String?> _showRejectDialog() async {
     final controller = TextEditingController();
-    return showDialog<String>(
+    final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Alasan Penolakan'),
         content: TextField(
           controller: controller,
           maxLines: 4,
+          maxLength: 1000,
           decoration: const InputDecoration(
-            hintText: 'Alasan wajib diisi',
+            hintText: 'Alasan wajib diisi (opsional, maks. 1000 karakter)',
           ),
         ),
         actions: [
@@ -130,14 +131,15 @@ class _AdminApplicationDetailScreenState
           FilledButton(
             onPressed: () {
               final text = controller.text.trim();
-              if (text.isEmpty) return;
-              Navigator.pop(dialogContext, text);
+              Navigator.pop(dialogContext, text.isEmpty ? '' : text);
             },
             child: const Text('Tolak'),
           ),
         ],
       ),
     );
+    controller.dispose();
+    return reason;
   }
 
   @override
@@ -165,47 +167,54 @@ class _AdminApplicationDetailScreenState
     final status = _status;
     final name = data['nama']?.toString() ?? '-';
     final email = data['email']?.toString() ?? '-';
-    final date = data['admin_application_date']?.toString();
-    final reason = data['admin_rejection_reason'] as String?;
+    final appliedAt = Formatters.parseDate(data['admin_application_date']);
+    final reviewedAt = Formatters.parseDate(data['admin_reviewed_at']);
+    final reviewer = data['admin_reviewer_nama']?.toString();
+    final reason = data['admin_rejection_reason']?.toString().trim() ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.card),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        SummaryCard(
+          children: [
+            Row(
               children: [
-                Text(name, style: Theme.of(context).textTheme.headlineLarge),
-                const SizedBox(height: AppSpacing.xs),
-                Text(email, style: Theme.of(context).textTheme.bodySmall),
-                if (date != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text('Tanggal pengajuan: $date',
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
-                const SizedBox(height: AppSpacing.sm),
-                _StatusPill(status: status),
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                ApplicationStatusBadge(status: status),
               ],
             ),
-          ),
-        ),
-        if (status == 'rejected' && reason != null && reason.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.lg),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.card),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Alasan Penolakan',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(reason, style: Theme.of(context).textTheme.bodyLarge),
-                ],
-              ),
+            const SizedBox(height: AppSpacing.sm),
+            InfoRow(label: 'Email', value: email),
+            InfoRow(
+              label: 'Tanggal pengajuan',
+              value: appliedAt == null
+                  ? '-'
+                  : Formatters.dateLong(appliedAt),
             ),
+            if (reviewedAt != null)
+              InfoRow(
+                label: 'Ditinjau pada',
+                value: Formatters.dateLong(reviewedAt),
+              ),
+            if (reviewer != null && reviewer.isNotEmpty)
+              InfoRow(label: 'Ditinjau oleh', value: reviewer),
+          ],
+        ),
+        if (status == 'rejected' && reason.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          SummaryCard(
+            title: 'Alasan penolakan',
+            children: [
+              Text(reason, style: Theme.of(context).textTheme.bodyMedium),
+            ],
           ),
         ],
         if (status == 'pending') ...[
@@ -248,44 +257,3 @@ class _AdminApplicationDetailScreenState
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (status) {
-      'pending' => AppColors.pendingText,
-      'approved' => AppColors.approvedText,
-      'rejected' => AppColors.rejectedText,
-      _ => AppColors.textSecondary,
-    };
-    final bg = switch (status) {
-      'pending' => AppColors.pendingBg,
-      'approved' => AppColors.approvedBg,
-      'rejected' => AppColors.rejectedBg,
-      _ => AppColors.surface,
-    };
-    final label = switch (status) {
-      'pending' => 'Menunggu',
-      'approved' => 'Disetujui',
-      'rejected' => 'Ditolak',
-      _ => status,
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
-      ),
-    );
-  }
-}
