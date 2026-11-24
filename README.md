@@ -55,3 +55,4 @@ flutter test
 ## Dokumentasi
 
 - `docs/API_MAPPING.md` — endpoint backend aktual dan pemetaan layar.
+- `asset/CREDITS.md` — kredit foto stok yang dipakai aplikasi.
