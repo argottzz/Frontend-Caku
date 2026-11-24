@@ -16,7 +16,10 @@ class StatusBadge extends StatelessWidget {
       RentalStatus.pending => (AppColors.pendingBg, AppColors.pendingText),
       RentalStatus.approved => (AppColors.approvedBg, AppColors.approvedText),
       RentalStatus.ongoing => (AppColors.ongoingBg, AppColors.ongoingText),
-      RentalStatus.completed => (AppColors.completedBg, AppColors.completedText),
+      RentalStatus.completed => (
+        AppColors.completedBg,
+        AppColors.completedText,
+      ),
       RentalStatus.rejected => (AppColors.rejectedBg, AppColors.rejectedText),
     };
 
@@ -114,35 +117,35 @@ class ApplicationStatusBadge extends StatelessWidget {
   final bool dense;
 
   static String labelFor(String? status) => switch (status) {
-        'pending' => 'Menunggu',
-        'approved' => 'Disetujui',
-        'rejected' => 'Ditolak',
-        _ => status == null || status.isEmpty ? '-' : status,
-      };
+    'pending' => 'Menunggu',
+    'approved' => 'Disetujui',
+    'rejected' => 'Ditolak',
+    _ => status == null || status.isEmpty ? '-' : status,
+  };
 
   @override
   Widget build(BuildContext context) {
     final (background, foreground, icon) = switch (status) {
       'pending' => (
-          AppColors.pendingBg,
-          AppColors.pendingText,
-          Icons.schedule_rounded,
-        ),
+        AppColors.pendingBg,
+        AppColors.pendingText,
+        Icons.schedule_rounded,
+      ),
       'approved' => (
-          AppColors.approvedBg,
-          AppColors.approvedText,
-          Icons.check_circle_outline_rounded,
-        ),
+        AppColors.approvedBg,
+        AppColors.approvedText,
+        Icons.check_circle_outline_rounded,
+      ),
       'rejected' => (
-          AppColors.rejectedBg,
-          AppColors.rejectedText,
-          Icons.cancel_outlined,
-        ),
+        AppColors.rejectedBg,
+        AppColors.rejectedText,
+        Icons.cancel_outlined,
+      ),
       _ => (
-          AppColors.surfaceMuted,
-          AppColors.textSecondary,
-          Icons.help_outline_rounded,
-        ),
+        AppColors.surfaceMuted,
+        AppColors.textSecondary,
+        Icons.help_outline_rounded,
+      ),
     };
 
     return BadgePill(

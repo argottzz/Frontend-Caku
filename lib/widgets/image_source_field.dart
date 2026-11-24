@@ -62,7 +62,9 @@ class _ImageSourceFieldState extends State<ImageSourceField> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.modal)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.modal),
+        ),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(

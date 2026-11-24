@@ -42,7 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Status hanya relevan untuk customer yang sudah punya sesi.
     if (user == null || user.isAdmin) return;
     try {
-      final data = await AppScope.read(context).adminApplications.myApplication();
+      final data = await AppScope.read(
+        context,
+      ).adminApplications.myApplication();
       if (!mounted) return;
       setState(() => _applicationStatus = applicationStatus(data));
     } catch (error) {
@@ -85,9 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _open(BuildContext context, Widget screen) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => screen),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
   @override
@@ -311,9 +311,9 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.4,
-          ),
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
+      ),
     );
   }
 }

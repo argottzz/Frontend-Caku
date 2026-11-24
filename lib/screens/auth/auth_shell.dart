@@ -142,9 +142,9 @@ class _BrandPanel extends StatelessWidget {
               const Spacer(),
               Text(
                 'CAKU • Penyewaan perlengkapan camping',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.sageLight,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.sageLight),
               ),
             ],
           ),
@@ -180,9 +180,9 @@ class _BrandPoint extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.sageLight,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.sageLight),
             ),
           ),
         ],
@@ -261,23 +261,17 @@ class _FormContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.displayLarge,
-        ),
+        Text(title, style: Theme.of(context).textTheme.displayLarge),
         const SizedBox(height: AppSpacing.sm),
         Text(
           subtitle,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.xl),
         child,
-        if (footer != null) ...[
-          const SizedBox(height: AppSpacing.lg),
-          footer!,
-        ],
+        if (footer != null) ...[const SizedBox(height: AppSpacing.lg), footer!],
       ],
     );
   }

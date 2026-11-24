@@ -112,10 +112,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: _buildBody(),
-    );
+    return Scaffold(backgroundColor: AppColors.background, body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -262,7 +259,9 @@ class _PendingBanner extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
+            border: Border.all(
+              color: AppColors.warning.withValues(alpha: 0.35),
+            ),
           ),
           child: Row(
             children: [
@@ -287,17 +286,17 @@ class _PendingBanner extends StatelessWidget {
                     Text(
                       '$count pengajuan menunggu',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.warningText,
-                          ),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.warningText,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Verifikasi agar stok dan jadwal sewa akurat.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.warningText,
-                          ),
+                        color: AppColors.warningText,
+                      ),
                     ),
                   ],
                 ),

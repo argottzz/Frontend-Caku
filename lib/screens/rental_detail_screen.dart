@@ -105,8 +105,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     final confirmed = await showConfirmDialog(
       context,
       title: 'Hapus transaksi?',
-      message:
-          'Pengajuan yang dihapus tidak dapat dikembalikan.',
+      message: 'Pengajuan yang dihapus tidak dapat dikembalikan.',
       confirmLabel: 'Hapus',
       destructive: true,
     );
@@ -462,52 +461,47 @@ class _StatusGuidance extends StatelessWidget {
   Widget build(BuildContext context) {
     final (tone, icon, title, message) = switch (rental.status) {
       RentalStatus.pending => (
-          NoticeTone.warning,
-          Icons.hourglass_top_rounded,
-          'Menunggu verifikasi',
-          isAdmin
-              ? 'Periksa bukti transfer, lalu setujui atau tolak pengajuan.'
-              : 'Pembayaran sedang diperiksa admin. Status akan berubah '
+        NoticeTone.warning,
+        Icons.hourglass_top_rounded,
+        'Menunggu verifikasi',
+        isAdmin
+            ? 'Periksa bukti transfer, lalu setujui atau tolak pengajuan.'
+            : 'Pembayaran sedang diperiksa admin. Status akan berubah '
                   'setelah diverifikasi.',
-        ),
+      ),
       RentalStatus.approved => (
-          NoticeTone.success,
-          Icons.storefront_outlined,
-          'Siap diambil di lokasi',
-          'Pembayaran sudah diverifikasi dan penyewaan disetujui. Silakan '
-              'datang ke lokasi penyewaan CAKU untuk mengambil barang pada '
-              '${Formatters.dateLong(rental.tanggalMulai)}. Barang tidak '
-              'dikirim ke alamat.',
-        ),
+        NoticeTone.success,
+        Icons.storefront_outlined,
+        'Siap diambil di lokasi',
+        'Pembayaran sudah diverifikasi dan penyewaan disetujui. Silakan '
+            'datang ke lokasi penyewaan CAKU untuk mengambil barang pada '
+            '${Formatters.dateLong(rental.tanggalMulai)}. Barang tidak '
+            'dikirim ke alamat.',
+      ),
       RentalStatus.ongoing => (
-          NoticeTone.info,
-          Icons.backpack_outlined,
-          'Masa sewa berjalan',
-          'Barang sudah diserahkan. Kembalikan paling lambat '
-              '${Formatters.dateLong(rental.tanggalSelesai)} agar tidak '
-              'dikenakan denda.',
-        ),
+        NoticeTone.info,
+        Icons.backpack_outlined,
+        'Masa sewa berjalan',
+        'Barang sudah diserahkan. Kembalikan paling lambat '
+            '${Formatters.dateLong(rental.tanggalSelesai)} agar tidak '
+            'dikenakan denda.',
+      ),
       RentalStatus.completed => (
-          NoticeTone.success,
-          Icons.task_alt_rounded,
-          'Penyewaan selesai',
-          'Terima kasih sudah menyewa di CAKU. Transaksi ini sudah selesai.',
-        ),
+        NoticeTone.success,
+        Icons.task_alt_rounded,
+        'Penyewaan selesai',
+        'Terima kasih sudah menyewa di CAKU. Transaksi ini sudah selesai.',
+      ),
       RentalStatus.rejected => (
-          NoticeTone.error,
-          Icons.cancel_outlined,
-          'Pengajuan ditolak',
-          'Pengajuan ini tidak dapat diproses. Silakan hubungi admin atau '
-              'ajukan sewa baru.',
-        ),
+        NoticeTone.error,
+        Icons.cancel_outlined,
+        'Pengajuan ditolak',
+        'Pengajuan ini tidak dapat diproses. Silakan hubungi admin atau '
+            'ajukan sewa baru.',
+      ),
     };
 
-    return InlineNotice(
-      tone: tone,
-      icon: icon,
-      title: title,
-      message: message,
-    );
+    return InlineNotice(tone: tone, icon: icon, title: title, message: message);
   }
 }
 

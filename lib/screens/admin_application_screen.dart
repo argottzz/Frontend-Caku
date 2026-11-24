@@ -40,7 +40,9 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
       _error = null;
     });
     try {
-      final data = await AppScope.read(context).adminApplications.myApplication();
+      final data = await AppScope.read(
+        context,
+      ).adminApplications.myApplication();
       if (!mounted) return;
       setState(() => _application = data);
     } on ApiException catch (error) {
@@ -78,14 +80,15 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CakuAppBar(title: 'Permohonan Menjadi Admin', showBack: true),
+      appBar: const CakuAppBar(
+        title: 'Permohonan Menjadi Admin',
+        showBack: true,
+      ),
       body: _loading
           ? const LoadingView()
           : _error != null
-              ? ErrorView(message: _error!, onRetry: _load)
-              : ResponsiveFrame(
-                  child: _buildBody(),
-                ),
+          ? ErrorView(message: _error!, onRetry: _load)
+          : ResponsiveFrame(child: _buildBody()),
     );
   }
 
@@ -133,7 +136,8 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
             tone: NoticeTone.warning,
             icon: Icons.hourglass_top_rounded,
             title: 'Menunggu peninjauan',
-            message: 'Admin akan meninjau permohonan Anda. Status diperbarui '
+            message:
+                'Admin akan meninjau permohonan Anda. Status diperbarui '
                 'di halaman ini dan di Profil.',
           ),
         ],
@@ -150,7 +154,8 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
             tone: NoticeTone.success,
             icon: Icons.verified_user_outlined,
             title: 'Permohonan disetujui',
-            message: 'Akun Anda kini memiliki akses Admin. Masuk ulang jika '
+            message:
+                'Akun Anda kini memiliki akses Admin. Masuk ulang jika '
                 'menu admin belum muncul.',
           ),
         ],

@@ -148,9 +148,7 @@ class EmptyView extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   const Positioned.fill(
-                    child: ClipOval(
-                      child: ForestPattern(opacity: 0.35),
-                    ),
+                    child: ClipOval(child: ForestPattern(opacity: 0.35)),
                   ),
                   Icon(icon, color: AppColors.forest, size: 30),
                 ],

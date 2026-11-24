@@ -59,7 +59,9 @@ abstract final class AppTheme {
       visualDensity: VisualDensity.standard,
     );
 
-    final textTheme = base.textTheme.apply(fontFamily: fontFamily).copyWith(
+    final textTheme = base.textTheme
+        .apply(fontFamily: fontFamily)
+        .copyWith(
           displayLarge: const TextStyle(
             fontSize: 26,
             height: 1.25,
@@ -199,15 +201,24 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.focusBorder, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.focusBorder,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.errorBorder, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.errorBorder,
+            width: 1.5,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: const BorderSide(color: AppColors.errorBorder, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.errorBorder,
+            width: 1.5,
+          ),
         ),
         errorStyle: const TextStyle(
           color: AppColors.error,

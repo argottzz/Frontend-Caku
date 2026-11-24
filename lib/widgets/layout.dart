@@ -79,9 +79,9 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleStyle = dense
         ? Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            )
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          )
         : Theme.of(context).textTheme.titleLarge;
 
     return Row(

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -39,8 +39,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardingPage(
       title: 'Siap Berpetualang',
       keyword: 'Berpetualang',
-      body:
-          'Semua kebutuhan outdoor-mu tersedia. Mulai perjalananmu sekarang.',
+      body: 'Semua kebutuhan outdoor-mu tersedia. Mulai perjalananmu sekarang.',
       image: 'asset/onboarding-3.jpg',
       fullBleed: false,
     ),
@@ -224,18 +223,15 @@ class _FullBleedOnboarding extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _TitleWithKeyword(
-                      title: page.title,
-                      keyword: page.keyword,
-                    ),
+                    _TitleWithKeyword(title: page.title, keyword: page.keyword),
                     const SizedBox(height: AppSpacing.md),
                     Text(
                       page.body,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.textSecondary,
-                            height: 1.6,
-                          ),
+                        color: AppColors.textSecondary,
+                        height: 1.6,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     _Dots(index: index, total: total),
@@ -328,14 +324,14 @@ class _BoxedOnboarding extends StatelessWidget {
                             alignment: Alignment.center,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
-                              color: AppColors.disabledSurface,
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.terrain_rounded,
-                                color: AppColors.textSecondary,
-                                size: 48,
-                              ),
-                            ),
+                                  color: AppColors.disabledSurface,
+                                  alignment: Alignment.center,
+                                  child: const Icon(
+                                    Icons.terrain_rounded,
+                                    color: AppColors.textSecondary,
+                                    size: 48,
+                                  ),
+                                ),
                           ),
                         ),
                       ),
@@ -349,8 +345,8 @@ class _BoxedOnboarding extends StatelessWidget {
                         page.body,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -358,10 +354,7 @@ class _BoxedOnboarding extends StatelessWidget {
               ),
               _Dots(index: index, total: total),
               const SizedBox(height: AppSpacing.xl),
-              PrimaryButton(
-                label: 'Mulai',
-                onPressed: onFinish,
-              ),
+              PrimaryButton(label: 'Mulai', onPressed: onFinish),
               const SizedBox(height: AppSpacing.lg),
             ],
           ),
@@ -372,10 +365,7 @@ class _BoxedOnboarding extends StatelessWidget {
 }
 
 class _TitleWithKeyword extends StatelessWidget {
-  const _TitleWithKeyword({
-    required this.title,
-    required this.keyword,
-  });
+  const _TitleWithKeyword({required this.title, required this.keyword});
 
   final String title;
   final String keyword;
@@ -389,16 +379,17 @@ class _TitleWithKeyword extends StatelessWidget {
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineLarge?.copyWith(color: AppColors.textPrimary),
             children: [
               TextSpan(text: parts.first),
               TextSpan(
                 text: keyword,
                 style: const TextStyle(color: AppColors.forest),
               ),
-              if (parts.length > 1) TextSpan(text: parts.sublist(1).join(keyword)),
+              if (parts.length > 1)
+                TextSpan(text: parts.sublist(1).join(keyword)),
             ],
           ),
         ),

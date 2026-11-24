@@ -70,9 +70,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         '$added ${_item.nama} ditambahkan ke keranjang.',
         actionLabel: 'Lihat',
         onAction: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const CartScreen()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
         },
       );
     } else {
@@ -195,8 +195,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               padding: const EdgeInsets.all(AppSpacing.lg),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.lg),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
                                 border: Border.all(color: AppColors.border),
                               ),
                               child: Column(
@@ -204,9 +205,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 children: [
                                   Text(
                                     'Deskripsi',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge,
                                   ),
                                   const SizedBox(height: AppSpacing.sm),
                                   _Description(
@@ -280,8 +281,7 @@ class _CircleAction extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.border),
             ),
-            child: child ??
-                Icon(icon, color: AppColors.forest, size: 20),
+            child: child ?? Icon(icon, color: AppColors.forest, size: 20),
           ),
         ),
       ),
@@ -523,7 +523,9 @@ class _BottomActionBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: canAdd ? AppColors.forest : AppColors.textSecondary,
+                      color: canAdd
+                          ? AppColors.forest
+                          : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -553,9 +555,7 @@ class _BottomActionBar extends StatelessWidget {
               height: 48,
               child: IconButton(
                 onPressed: canAdd ? onAdd : null,
-                tooltip: canAdd
-                    ? 'Tambahkan ke Keranjang'
-                    : 'Stok habis',
+                tooltip: canAdd ? 'Tambahkan ke Keranjang' : 'Stok habis',
                 style: IconButton.styleFrom(
                   backgroundColor: AppColors.forest,
                   foregroundColor: AppColors.white,

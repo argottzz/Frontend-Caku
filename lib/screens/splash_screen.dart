@@ -80,9 +80,7 @@ class _SplashScreenState extends State<SplashScreen>
                             const SizedBox(height: 20),
                             Text(
                               'CAKU',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .displayLarge
+                              style: Theme.of(context).textTheme.displayLarge
                                   ?.copyWith(
                                     color: AppColors.forest,
                                     letterSpacing: 6,
@@ -93,12 +91,8 @@ class _SplashScreenState extends State<SplashScreen>
                             Text(
                               'Explore More, Worry Less.',
                               textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: AppColors.textSecondary),
                             ),
                           ],
                         ),

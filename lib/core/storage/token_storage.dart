@@ -25,9 +25,9 @@ class TokenStorage {
   Future<String?> read() async {
     if (_useMemoryFallback) return _memoryToken;
     try {
-      final token = await _storage.read(key: _tokenKey).timeout(
-        const Duration(milliseconds: 500),
-      );
+      final token = await _storage
+          .read(key: _tokenKey)
+          .timeout(const Duration(milliseconds: 500));
       _memoryToken = token;
       return token;
     } catch (error) {
@@ -41,9 +41,9 @@ class TokenStorage {
     _memoryToken = token;
     if (_useMemoryFallback) return;
     try {
-      await _storage.write(key: _tokenKey, value: token).timeout(
-        const Duration(milliseconds: 500),
-      );
+      await _storage
+          .write(key: _tokenKey, value: token)
+          .timeout(const Duration(milliseconds: 500));
     } catch (error) {
       debugPrint('TokenStorage.write fallback ke memori: $error');
       _useMemoryFallback = true;
@@ -54,9 +54,9 @@ class TokenStorage {
     _memoryToken = null;
     if (_useMemoryFallback) return;
     try {
-      await _storage.delete(key: _tokenKey).timeout(
-        const Duration(milliseconds: 500),
-      );
+      await _storage
+          .delete(key: _tokenKey)
+          .timeout(const Duration(milliseconds: 500));
     } catch (error) {
       debugPrint('TokenStorage.clear fallback ke memori: $error');
       _useMemoryFallback = true;
@@ -67,9 +67,9 @@ class TokenStorage {
   Future<bool> readOnboardingSeen() async {
     if (_useMemoryFallback) return _memoryOnboardingSeen;
     try {
-      final value = await _storage.read(key: _onboardingKey).timeout(
-        const Duration(milliseconds: 500),
-      );
+      final value = await _storage
+          .read(key: _onboardingKey)
+          .timeout(const Duration(milliseconds: 500));
       _memoryOnboardingSeen = value == 'true';
       return _memoryOnboardingSeen;
     } catch (error) {
@@ -84,9 +84,9 @@ class TokenStorage {
     _memoryOnboardingSeen = true;
     if (_useMemoryFallback) return;
     try {
-      await _storage.write(key: _onboardingKey, value: 'true').timeout(
-        const Duration(milliseconds: 500),
-      );
+      await _storage
+          .write(key: _onboardingKey, value: 'true')
+          .timeout(const Duration(milliseconds: 500));
     } catch (error) {
       debugPrint('TokenStorage.writeOnboardingSeen fallback ke memori: $error');
       _useMemoryFallback = true;

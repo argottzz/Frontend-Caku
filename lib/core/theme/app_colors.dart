@@ -68,7 +68,9 @@ abstract final class AppColors {
   static const Color success = Color(0xFF28734E);
   static const Color successSurface = Color(0xFFE3F0E9);
   static const Color warning = Color(0xFFA66A24);
-  static const Color warningText = Color(0xFF8A5717); // teks di atas warningSurface
+  static const Color warningText = Color(
+    0xFF8A5717,
+  ); // teks di atas warningSurface
   static const Color warningSurface = Color(0xFFFBF0DF);
   static const Color error = Color(0xFFB54747);
   static const Color errorSurface = Color(0xFFFBEEEE);

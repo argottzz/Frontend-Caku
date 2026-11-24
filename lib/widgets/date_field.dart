@@ -50,7 +50,9 @@ class DateField extends StatelessWidget {
                 Icon(
                   Icons.calendar_month_rounded,
                   size: 20,
-                  color: value == null ? AppColors.textSecondary : AppColors.moss,
+                  color: value == null
+                      ? AppColors.textSecondary
+                      : AppColors.moss,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -60,8 +62,9 @@ class DateField extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          value == null ? FontWeight.w400 : FontWeight.w600,
+                      fontWeight: value == null
+                          ? FontWeight.w400
+                          : FontWeight.w600,
                       color: value == null
                           ? AppColors.textSecondary
                           : AppColors.textPrimary,

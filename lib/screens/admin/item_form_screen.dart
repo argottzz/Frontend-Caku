@@ -150,13 +150,16 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
       if (!mounted) return;
       AppSnack.success(
         context,
-        _isEdit ? 'Barang berhasil diperbarui.' : 'Barang berhasil ditambahkan.',
+        _isEdit
+            ? 'Barang berhasil diperbarui.'
+            : 'Barang berhasil ditambahkan.',
       );
       Navigator.pop(context, true);
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _formError = error.fieldError('image') ??
+        _formError =
+            error.fieldError('image') ??
             error.fieldError('nama_item') ??
             error.fieldError('id_kategori') ??
             error.fieldError('stok') ??
@@ -232,9 +235,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     DropdownButtonFormField<int>(
                       initialValue: _categoryId,
-                      decoration: const InputDecoration(
-                        labelText: 'Kategori',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Kategori'),
                       items: _categories
                           .map(
                             (category) => DropdownMenuItem<int>(
@@ -272,7 +273,10 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(labelText: 'Stok'),
                       validator: (value) {
-                        final required = Validators.required(value, label: 'Stok');
+                        final required = Validators.required(
+                          value,
+                          label: 'Stok',
+                        );
                         if (required != null) return required;
                         final parsed = int.tryParse(value!.trim());
                         if (parsed == null || parsed < 0) {
@@ -330,9 +334,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                     const SizedBox(height: AppSpacing.xl),
                     PrimaryButton(
                       label: _isEdit ? 'Simpan perubahan' : 'Tambah barang',
-                      icon: _isEdit
-                          ? Icons.save_rounded
-                          : Icons.add_rounded,
+                      icon: _isEdit ? Icons.save_rounded : Icons.add_rounded,
                       loading: _saving,
                       onPressed: _saving ? null : _save,
                     ),

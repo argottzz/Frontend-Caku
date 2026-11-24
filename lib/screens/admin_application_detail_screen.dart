@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
@@ -43,9 +43,9 @@ class _AdminApplicationDetailScreenState
       _error = null;
     });
     try {
-      final data = await AppScope.read(context).adminApplications.detail(
-        widget.applicationId,
-      );
+      final data = await AppScope.read(
+        context,
+      ).adminApplications.detail(widget.applicationId);
       if (!mounted) return;
       setState(() => _data = data);
     } on ApiException catch (error) {
@@ -149,10 +149,8 @@ class _AdminApplicationDetailScreenState
       body: _loading
           ? const LoadingView()
           : _error != null
-              ? ErrorView(message: _error!, onRetry: _load)
-              : ResponsiveFrame(
-                  child: _buildBody(),
-                ),
+          ? ErrorView(message: _error!, onRetry: _load)
+          : ResponsiveFrame(child: _buildBody()),
     );
   }
 
@@ -195,9 +193,7 @@ class _AdminApplicationDetailScreenState
             InfoRow(label: 'Email', value: email),
             InfoRow(
               label: 'Tanggal pengajuan',
-              value: appliedAt == null
-                  ? '-'
-                  : Formatters.dateLong(appliedAt),
+              value: appliedAt == null ? '-' : Formatters.dateLong(appliedAt),
             ),
             if (reviewedAt != null)
               InfoRow(
@@ -256,4 +252,3 @@ class _AdminApplicationDetailScreenState
     );
   }
 }
-

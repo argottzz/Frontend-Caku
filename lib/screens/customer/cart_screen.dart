@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -182,10 +182,7 @@ class _CartScreenState extends State<CartScreen> {
     final isEmpty = cart.isEmpty;
 
     return Scaffold(
-      appBar: CakuAppBar(
-        title: 'Keranjang',
-        showBack: true,
-      ),
+      appBar: CakuAppBar(title: 'Keranjang', showBack: true),
       body: isEmpty
           ? EmptyView(
               icon: Icons.shopping_bag_outlined,
@@ -245,7 +242,8 @@ class _CartScreenState extends State<CartScreen> {
                       if (_hasStockIssue) ...[
                         const SizedBox(height: AppSpacing.md),
                         const InlineNotice(
-                          message: 'Jumlah melebihi stok tersedia. Kurangi jumlah.',
+                          message:
+                              'Jumlah melebihi stok tersedia. Kurangi jumlah.',
                           tone: NoticeTone.error,
                         ),
                       ],
@@ -415,7 +413,8 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _CartLineCard extends StatelessWidget {  const _CartLineCard({
+class _CartLineCard extends StatelessWidget {
+  const _CartLineCard({
     required this.line,
     required this.onIncrement,
     required this.onDecrement,
@@ -459,9 +458,9 @@ class _CartLineCard extends StatelessWidget {  const _CartLineCard({
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 15,
-                            height: 1.25,
-                          ),
+                        fontSize: 15,
+                        height: 1.25,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(

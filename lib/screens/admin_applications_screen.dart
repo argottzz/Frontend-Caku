@@ -19,7 +19,8 @@ class AdminApplicationsScreen extends StatefulWidget {
   const AdminApplicationsScreen({super.key});
 
   @override
-  State<AdminApplicationsScreen> createState() => _AdminApplicationsScreenState();
+  State<AdminApplicationsScreen> createState() =>
+      _AdminApplicationsScreenState();
 }
 
 class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {

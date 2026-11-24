@@ -31,9 +31,8 @@ class CakuBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final featured = featuredIndex;
-    final hasFeatured = featured != null &&
-        featured >= 0 &&
-        featured < destinations.length;
+    final hasFeatured =
+        featured != null && featured >= 0 && featured < destinations.length;
 
     final bar = Container(
       decoration: BoxDecoration(
