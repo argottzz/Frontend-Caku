@@ -7,6 +7,16 @@ import '../../../models/item.dart';
 import '../../../widgets/item_image.dart';
 import '../../../widgets/status_badge.dart';
 
+/// Grid dua kolom bersama untuk Beranda dan Katalog, sehingga tinggi kartu
+/// produk selalu identik di kedua layar.
+const SliverGridDelegateWithFixedCrossAxisCount itemGridDelegate =
+    SliverGridDelegateWithFixedCrossAxisCount(
+  crossAxisCount: 2,
+  crossAxisSpacing: AppSpacing.md,
+  mainAxisSpacing: AppSpacing.md,
+  mainAxisExtent: 292,
+);
+
 class ItemCard extends StatelessWidget {
   const ItemCard({
     super.key,
@@ -36,17 +46,23 @@ class ItemCard extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: 4 / 3,
-                child: ItemImage(imageUrl: item.imageUrl),
+                child: ItemImage(imageUrl: item.imageUrl, borderRadius: 0),
               ),
               Expanded(
-                child: Padding(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -54,13 +70,13 @@ class ItemCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                          color: AppColors.accentText,
+                          letterSpacing: 0.4,
+                          color: AppColors.moss,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         item.nama,
                         maxLines: 2,
@@ -72,18 +88,18 @@ class ItemCard extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const Spacer(),
                       Text(
                         '${Formatters.rupiah(item.hargaSewaHarian)}/hari',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: AppColors.forest,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: AppSpacing.sm),
                       CompactStockLine(stock: item.stok),
                     ],
                   ),
@@ -106,6 +122,7 @@ class ItemCardSkeleton extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
       ),
     );
   }

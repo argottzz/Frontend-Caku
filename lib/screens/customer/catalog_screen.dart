@@ -9,12 +9,15 @@ import '../../models/category.dart';
 import '../../models/item.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
-
+import '../../widgets/category_strip.dart';
+import '../../widgets/forest_header.dart';
 import '../../widgets/state_views.dart';
 import 'cart_screen.dart';
 import 'item_detail_screen.dart';
 import 'widgets/item_card.dart';
 
+/// Halaman Jelajahi: pusat pencarian, filter kategori, sorting, dan hasil
+/// katalog. Dibuka dari Beranda, bukan sebagai tab navigasi.
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({
     super.key,
@@ -160,6 +163,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
     _loadItems(reset: true);
   }
 
+  bool get _hasActiveFilter =>
+      _searchController.text.trim().isNotEmpty || _categoryId != null;
+
   List<Item> get _sortedItems {
     final items = List<Item>.from(_items);
     switch (_sort) {
@@ -198,14 +204,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = CartScope.of(context);
+    final canPop = Navigator.of(context).canPop();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Jelajahi'),
-        actions: [
-          _CartBadgeButton(count: cart.totalQuantity, onTap: _openCart),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.forest,
@@ -214,9 +216,35 @@ class _CatalogScreenState extends State<CatalogScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
+                padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+                child: ForestHeader(
+                  height: 168,
+                  eyebrow: 'Katalog CAKU',
+                  title: 'Jelajahi',
+                  subtitle: 'Temukan perlengkapan untuk petualanganmu.',
+                  actions: [
+                    if (canPop)
+                      ForestHeaderAction(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: 'Kembali',
+                        onTap: () => Navigator.of(context).maybePop(),
+                      ),
+                    const Spacer(),
+                    ForestHeaderAction(
+                      icon: Icons.shopping_cart_outlined,
+                      tooltip: 'Keranjang',
+                      badgeCount: cart.totalQuantity,
+                      onTap: _openCart,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screen,
-                  AppSpacing.md,
+                  AppSpacing.lg,
                   AppSpacing.screen,
                   AppSpacing.sm,
                 ),
@@ -234,23 +262,45 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    _SortDropdown(
+                    _SortButton(
                       value: _sort,
-                      onChanged: (value) {
-                        setState(() => _sort = value);
-                      },
+                      onChanged: (value) => setState(() => _sort = value),
                     ),
                   ],
                 ),
               ),
             ),
             SliverToBoxAdapter(
-              child: SizedBox(
-                height: 46,
-                child: _CategoryStrip(
-                  categories: _categories,
-                  selectedId: _categoryId,
-                  onSelect: _selectCategory,
+              child: CategoryStrip(
+                categories: _categories,
+                selectedId: _categoryId,
+                onSelect: _selectCategory,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  AppSpacing.sm,
+                  AppSpacing.screen,
+                  0,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _loading
+                            ? 'Memuat perlengkapan...'
+                            : '$_total perlengkapan ditemukan',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    if (_hasActiveFilter)
+                      TextButton(
+                        onPressed: _resetFilters,
+                        child: const Text('Reset filter'),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -271,12 +321,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 6,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: AppSpacing.md,
-                mainAxisSpacing: AppSpacing.md,
-                childAspectRatio: 0.6,
-              ),
+              gridDelegate: itemGridDelegate,
               itemBuilder: (_, _) => const ItemCardSkeleton(),
             ),
           ),
@@ -319,12 +364,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              mainAxisExtent: 260,
-            ),
+            gridDelegate: itemGridDelegate,
             itemBuilder: (context, index) {
               final item = items[index];
               return ItemCard(
@@ -411,162 +451,65 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-class _CategoryStrip extends StatelessWidget {
-  const _CategoryStrip({
-    required this.categories,
-    required this.selectedId,
-    required this.onSelect,
-  });
+/// Tombol sorting ringkas: ikon di bar, pilihan di menu.
+class _SortButton extends StatelessWidget {
+  const _SortButton({required this.value, required this.onChanged});
 
-  final List<Category> categories;
-  final int? selectedId;
-  final ValueChanged<int?> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    if (categories.isEmpty) return const SizedBox.shrink();
-    return ListView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      children: [
-        _CategoryPill(
-          label: 'Semua',
-          selected: selectedId == null,
-          onTap: () => onSelect(null),
-        ),
-        ...categories.map(
-          (category) => _CategoryPill(
-            label: category.nama,
-            selected: selectedId == category.id,
-            onTap: () => onSelect(category.id),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CategoryPill extends StatelessWidget {
-  const _CategoryPill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm),
-      child: Material(
-        color: selected ? AppColors.forest : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: selected ? AppColors.forest : AppColors.border,
-              ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.white : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SortDropdown extends StatelessWidget {
-  const _SortDropdown({required this.value, required this.onChanged});
+  static const Map<String, String> _options = {
+    'default': 'Urutkan: relevan',
+    'price_asc': 'Harga termurah',
+    'price_desc': 'Harga termahal',
+    'name_asc': 'Nama A-Z',
+    'name_desc': 'Nama Z-A',
+  };
 
   final String value;
   final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.controlBorder),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          icon: const Icon(Icons.sort_rounded, size: 18),
-          items: const [
-            DropdownMenuItem(value: 'default', child: Text('Urutkan')),
-            DropdownMenuItem(value: 'price_asc', child: Text('Harga termurah')),
-            DropdownMenuItem(value: 'price_desc', child: Text('Harga termahal')),
-            DropdownMenuItem(value: 'name_asc', child: Text('Nama A-Z')),
-            DropdownMenuItem(value: 'name_desc', child: Text('Nama Z-A')),
-          ],
-          onChanged: (value) {
-            if (value != null) onChanged(value);
-          },
-        ),
-      ),
-    );
-  }
-}
+    final active = value != 'default';
 
-class _CartBadgeButton extends StatelessWidget {
-  const _CartBadgeButton({required this.count, required this.onTap});
-
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          IconButton(
-            onPressed: onTap,
-            icon: const Icon(Icons.shopping_cart_outlined),
-            tooltip: 'Keranjang',
-          ),
-          if (count > 0)
-            Positioned(
-              right: 4,
-              top: 4,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  color: AppColors.orange,
-                  shape: BoxShape.circle,
+    return PopupMenuButton<String>(
+      tooltip: 'Urutkan',
+      initialValue: value,
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        for (final entry in _options.entries)
+          PopupMenuItem<String>(
+            value: entry.key,
+            child: Row(
+              children: [
+                Icon(
+                  entry.key == value
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  size: 18,
+                  color: entry.key == value
+                      ? AppColors.moss
+                      : AppColors.textSecondary,
                 ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    color: AppColors.textOnOrange,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(entry.value),
+              ],
             ),
-        ],
+          ),
+      ],
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: active ? AppColors.moss : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: active ? AppColors.moss : AppColors.border,
+          ),
+        ),
+        child: Icon(
+          Icons.tune_rounded,
+          size: 20,
+          color: active ? AppColors.white : AppColors.moss,
+        ),
       ),
     );
   }
