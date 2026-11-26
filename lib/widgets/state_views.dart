@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
-import 'forest_pattern.dart';
 
 class LoadingView extends StatelessWidget {
   const LoadingView({
@@ -144,15 +143,7 @@ class EmptyView extends StatelessWidget {
                 color: AppColors.forestSurface,
                 shape: BoxShape.circle,
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Positioned.fill(
-                    child: ClipOval(child: ForestPattern(opacity: 0.35)),
-                  ),
-                  Icon(icon, color: AppColors.forest, size: 30),
-                ],
-              ),
+              child: Icon(icon, color: AppColors.forest, size: 30),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(

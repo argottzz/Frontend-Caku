@@ -182,11 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
               ),
               const SizedBox(height: AppSpacing.lg),
-              FieldLabel(
-                label: 'Kata sandi',
-                required: true,
-                hint: '6–72 karakter',
-              ),
+              const FieldLabel(label: 'Kata sandi', required: true),
               TextFormField(
                 controller: _passwordController,
                 focusNode: _passwordFocus,

@@ -64,11 +64,11 @@ flutter:
   uses-material-design: true
 
   assets:
-    - asset/caku-logo.jpg
-    - asset/forest-header.jpg
-    - asset/onboarding-1.jpg
-    - asset/onboarding-2.jpg
-    - asset/onboarding-3.jpg
+    - asset/images/branding/caku-logo.png
+    - asset/images/branding/forest-header.jpg
+    - asset/images/onboarding/onboarding-1.jpg
+    - asset/images/onboarding/onboarding-2.jpg
+    - asset/images/onboarding/onboarding-3.jpg
 
   fonts:
     - family: PlusJakartaSans
@@ -80,7 +80,7 @@ flutter:
         - asset: asset/fonts/plus-jakarta-sans-latin-700-normal.woff2
           weight: 700
 
-  # Foto produk disimpan di asset/ sebagai sumber unggahan admin dan tidak
+  # Foto produk disimpan di asset/images/products/ sebagai sumber unggahan admin dan tidak
   # dibundel ke aplikasi; gambar produk ditampilkan dari URL Cloudinary.
 
   # An image asset can refer to one or more resolution-specific "variants", see

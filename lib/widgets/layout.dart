@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
-import 'forest_pattern.dart';
 
 /// Kerangka konten responsif: nyaman di ponsel dan tidak melebar di web.
 class ResponsiveFrame extends StatelessWidget {
@@ -44,14 +43,7 @@ class BrandBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(color: AppColors.background),
-      child: Stack(
-        children: [
-          const Positioned.fill(
-            child: IgnorePointer(child: ForestPattern(opacity: 0.22)),
-          ),
-          child,
-        ],
-      ),
+      child: child,
     );
   }
 }

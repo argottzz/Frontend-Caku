@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/caku_bottom_nav.dart';
 import 'dashboard_screen.dart';
 import 'items_screen.dart';
-import '../profile_screen.dart';
-import '../rentals_screen.dart';
+import '../shared/profile_screen.dart';
+import '../shared/rentals_screen.dart';
 
 /// Kerangka navigasi utama admin: Dashboard, Barang, Transaksi, dan Profil.
 class AdminShell extends StatefulWidget {

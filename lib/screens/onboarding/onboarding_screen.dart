@@ -5,7 +5,6 @@ import '../../core/theme/app_theme.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_buttons.dart';
-import '../../widgets/forest_pattern.dart';
 
 /// Layar onboarding CAKU (3 halaman) sesuai `desain.md`.
 class OnboardingScreen extends StatefulWidget {
@@ -25,7 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       keyword: 'Camping',
       body:
           'Temukan dan sewa perlengkapan camping lengkap untuk petualanganmu.',
-      image: 'asset/onboarding-1.jpg',
+      image: 'asset/images/onboarding/onboarding-1.jpg',
       fullBleed: true,
     ),
     _OnboardingPage(
@@ -33,14 +32,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       keyword: 'Periode',
       body:
           'Pilih tanggal sewa dan cek ketersediaan stok perlengkapan dengan mudah.',
-      image: 'asset/onboarding-2.jpg',
+      image: 'asset/images/onboarding/onboarding-2.jpg',
       fullBleed: true,
     ),
     _OnboardingPage(
       title: 'Siap Berpetualang',
       keyword: 'Berpetualang',
       body: 'Semua kebutuhan outdoor-mu tersedia. Mulai perjalananmu sekarang.',
-      image: 'asset/onboarding-3.jpg',
+      image: 'asset/images/onboarding/onboarding-3.jpg',
       fullBleed: false,
     ),
   ];
@@ -168,11 +167,6 @@ class _FullBleedOnboarding extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          ),
-          const Positioned.fill(
-            child: IgnorePointer(
-              child: ForestPattern(color: AppColors.forest, opacity: 0.05),
             ),
           ),
           // Bar aksi atas: kembali (halaman 2 ke atas) di kiri, lewatkan di kanan.

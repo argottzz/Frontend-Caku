@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
-import '../core/theme/app_theme.dart';
-import '../data/admin_application_service.dart';
-import '../state/app_scope.dart';
-import '../widgets/confirm_dialog.dart';
-import '../widgets/forest_header.dart';
-import '../widgets/layout.dart';
-import '../widgets/state_views.dart';
-import '../widgets/status_badge.dart';
-import 'admin/dashboard_screen.dart';
+import '../../core/network/api_exception.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../data/admin_application_service.dart';
+import '../../core/utils/image_picker_helper.dart';
+import '../../state/app_scope.dart';
+import '../../widgets/app_snack.dart';
+import '../../widgets/caku_app_bar.dart';
+import '../../widgets/confirm_dialog.dart';
+import '../../widgets/layout.dart';
+import '../../widgets/state_views.dart';
+import '../../widgets/status_badge.dart';
+import '../admin/dashboard_screen.dart';
 import 'admin_applications_screen.dart';
 
 /// Profil pengguna. Customer: [14], Admin: [28].
@@ -26,6 +29,54 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   /// Status permohonan admin terakhir (`none`/`pending`/`approved`/`rejected`).
   String? _applicationStatus;
+  bool _uploadingImage = false;
+  bool _removingImage = false;
+
+  Future<void> _changeProfileImage(BuildContext context) async {
+    final upload = await ImagePickerHelper.pick();
+    if (upload == null || !mounted) return;
+    setState(() => _uploadingImage = true);
+    try {
+      final user = await AppScope.read(
+        context,
+      ).users.updateProfileImage(upload);
+      if (!mounted) return;
+      AuthScope.read(context).setUser(user);
+      AppSnack.success(context, 'Foto profil berhasil diperbarui.');
+    } on ApiException catch (error) {
+      if (mounted) AppSnack.error(context, error.message);
+    } catch (error) {
+      debugPrint('Upload foto profil error: $error');
+      if (mounted) AppSnack.error(context, 'Gagal mengunggah foto profil.');
+    } finally {
+      if (mounted) setState(() => _uploadingImage = false);
+    }
+  }
+
+  Future<void> _removeProfileImage(BuildContext context) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Hapus foto profil?',
+      message: 'Foto profil akan dihapus dan avatar kembali ke inisial.',
+      confirmLabel: 'Hapus',
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _removingImage = true);
+    try {
+      final user = await AppScope.read(context).users.removeProfileImage();
+      if (!mounted) return;
+      AuthScope.read(context).setUser(user);
+      AppSnack.success(context, 'Foto profil berhasil dihapus.');
+    } on ApiException catch (error) {
+      if (mounted) AppSnack.error(context, error.message);
+    } catch (error) {
+      debugPrint('Hapus foto profil error: $error');
+      if (mounted) AppSnack.error(context, 'Gagal menghapus foto profil.');
+    } finally {
+      if (mounted) setState(() => _removingImage = false);
+    }
+  }
 
   @override
   void initState() {
@@ -113,18 +164,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: CakuAppBar(
+        title: title,
+      ),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: ForestHeader(
-              height: 150,
-              eyebrow: user.role.label,
-              title: title,
-              subtitle: 'Kelola akun dan pengaturan CAKU.',
-            ),
-          ),
           ResponsiveFrame(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.screen,
@@ -141,6 +186,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   email: user.email,
                   roleLabel: user.role.label,
                   showRoleBadge: isAdmin,
+                  profileImageUrl: user.profileImage,
+                  uploading: _uploadingImage || _removingImage,
+                  onUpload: () => _changeProfileImage(context),
+                  onRemove: () => _removeProfileImage(context),
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
@@ -231,6 +280,10 @@ class _IdentityCard extends StatelessWidget {
     required this.email,
     required this.roleLabel,
     required this.showRoleBadge,
+    this.profileImageUrl,
+    this.uploading = false,
+    this.onUpload,
+    this.onRemove,
   });
 
   final String initials;
@@ -238,6 +291,10 @@ class _IdentityCard extends StatelessWidget {
   final String email;
   final String roleLabel;
   final bool showRoleBadge;
+  final String? profileImageUrl;
+  final bool uploading;
+  final VoidCallback? onUpload;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -248,56 +305,104 @@ class _IdentityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.forest,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              initials,
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.forest,
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: uploading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : (profileImageUrl != null && profileImageUrl!.isNotEmpty
+                          ? Image.network(
+                              profileImageUrl!,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Text(
+                                initials,
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              initials,
+                              style: const TextStyle(
+                                color: AppColors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )),
               ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: Text(
-                        nama,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headlineLarge,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            nama,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.headlineLarge,
+                          ),
+                        ),
+                        if (showRoleBadge) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          _RoleBadge(label: roleLabel),
+                        ],
+                      ],
                     ),
-                    if (showRoleBadge) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      _RoleBadge(label: roleLabel),
-                    ],
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  email,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: uploading ? null : onUpload,
+                icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                label: const Text('Ubah foto'),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              if (profileImageUrl != null && profileImageUrl!.isNotEmpty)
+                TextButton.icon(
+                  onPressed: uploading ? null : onRemove,
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text('Hapus foto'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.error),
                 ),
-              ],
-            ),
+            ],
           ),
         ],
       ),

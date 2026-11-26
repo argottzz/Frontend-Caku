@@ -45,6 +45,7 @@ class RentalItem {
     required this.hargaPerHari,
     required this.dendaPerHari,
     required this.subtotal,
+    this.originalPriceAtRental,
   });
 
   final int idDetail;
@@ -54,6 +55,7 @@ class RentalItem {
   final double hargaPerHari;
   final double dendaPerHari;
   final double subtotal;
+  final double? originalPriceAtRental;
 
   factory RentalItem.fromJson(Map<String, dynamic> json) {
     return RentalItem(
@@ -66,6 +68,133 @@ class RentalItem {
       dendaPerHari:
           double.tryParse(Json.asString(json['denda_perhari'], '0')) ?? 0,
       subtotal: double.tryParse(Json.asString(json['subtotal'], '0')) ?? 0,
+      originalPriceAtRental: double.tryParse(
+        Json.asString(json['original_price_at_rental'], ''),
+      ),
+    );
+  }
+}
+
+class RentalReplacement {
+  const RentalReplacement({
+    required this.idReplacement,
+    required this.idRental,
+    required this.totalAmount,
+    required this.status,
+    this.recordedBy,
+    this.completedBy,
+    this.completedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final int idReplacement;
+  final int idRental;
+  final String totalAmount;
+  final String status;
+  final int? recordedBy;
+  final int? completedBy;
+  final DateTime? completedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  bool get isPending => status.toLowerCase() == 'pending';
+  bool get isCompleted => status.toLowerCase() == 'completed';
+
+  factory RentalReplacement.fromJson(Map<String, dynamic> json) {
+    return RentalReplacement(
+      idReplacement: Json.asInt(json['id_replacement']),
+      idRental: Json.asInt(json['id_rental']),
+      totalAmount: Json.asString(json['total_amount']),
+      status: Json.asString(json['status']),
+      recordedBy: Json.asIntOrNull(json['recorded_by']),
+      completedBy: Json.asIntOrNull(json['completed_by']),
+      completedAt: Json.asDate(json['completed_at']),
+      createdAt: Json.asDate(json['created_at']),
+      updatedAt: Json.asDate(json['updated_at']),
+    );
+  }
+}
+
+class MissingOriginalPriceItem {
+  const MissingOriginalPriceItem({
+    required this.idItem,
+    required this.namaItem,
+    required this.jumlah,
+  });
+
+  final int idItem;
+  final String namaItem;
+  final int jumlah;
+
+  factory MissingOriginalPriceItem.fromJson(Map<String, dynamic> json) {
+    return MissingOriginalPriceItem(
+      idItem: Json.asInt(json['id_items']),
+      namaItem: Json.asString(json['nama_item']),
+      jumlah: Json.asInt(json['jumlah']),
+    );
+  }
+}
+
+class ReturnRentalResult extends Rental {
+  const ReturnRentalResult({
+    required super.id,
+    required super.idUser,
+    required super.namaUser,
+    required super.emailUser,
+    required super.tanggalMulai,
+    required super.tanggalSelesai,
+    required super.tanggalKembaliAktual,
+    required super.durasiHari,
+    required super.buktiTransferUrl,
+    required super.status,
+    required super.kondisiPengembalian,
+    required super.catatanPengembalian,
+    required super.jumlahItem,
+    required super.totalSewa,
+    required super.hariTerlambat,
+    required super.totalDenda,
+    required super.totalBayar,
+    required super.createdAt,
+    required super.items,
+    super.penggantian,
+    required this.perluPenyesuaianStok,
+    required this.penggantianPerluDitinjau,
+    required this.itemTanpaHargaAsli,
+  });
+
+  final bool perluPenyesuaianStok;
+  final bool penggantianPerluDitinjau;
+  final List<MissingOriginalPriceItem> itemTanpaHargaAsli;
+
+  factory ReturnRentalResult.fromJson(Map<String, dynamic> json) {
+    final rental = Rental.fromJson(json);
+    return ReturnRentalResult(
+      id: rental.id,
+      idUser: rental.idUser,
+      namaUser: rental.namaUser,
+      emailUser: rental.emailUser,
+      tanggalMulai: rental.tanggalMulai,
+      tanggalSelesai: rental.tanggalSelesai,
+      tanggalKembaliAktual: rental.tanggalKembaliAktual,
+      durasiHari: rental.durasiHari,
+      buktiTransferUrl: rental.buktiTransferUrl,
+      status: rental.status,
+      kondisiPengembalian: rental.kondisiPengembalian,
+      catatanPengembalian: rental.catatanPengembalian,
+      jumlahItem: rental.jumlahItem,
+      totalSewa: rental.totalSewa,
+      hariTerlambat: rental.hariTerlambat,
+      totalDenda: rental.totalDenda,
+      totalBayar: rental.totalBayar,
+      createdAt: rental.createdAt,
+      items: rental.items,
+      penggantian: rental.penggantian,
+      perluPenyesuaianStok: Json.asBool(json['perlu_penyesuaian_stok']),
+      penggantianPerluDitinjau: Json.asBool(json['penggantian_perlu_ditinjau']),
+      itemTanpaHargaAsli: Json.asMapList(
+        json['item_tanpa_harga_asli'],
+      ).map(MissingOriginalPriceItem.fromJson).toList(growable: false),
     );
   }
 }
@@ -91,6 +220,7 @@ class Rental {
     required this.totalBayar,
     required this.createdAt,
     required this.items,
+    this.penggantian,
   });
 
   final int id;
@@ -112,6 +242,7 @@ class Rental {
   final double totalBayar;
   final DateTime? createdAt;
   final List<RentalItem> items;
+  final RentalReplacement? penggantian;
 
   bool get isLate => hariTerlambat > 0;
   bool get canCancel => status == RentalStatus.pending;
@@ -143,6 +274,11 @@ class Rental {
       items: Json.asMapList(
         json['items'],
       ).map(RentalItem.fromJson).toList(growable: false),
+      penggantian: json['penggantian'] is Map<String, dynamic>
+          ? RentalReplacement.fromJson(
+              json['penggantian'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 }

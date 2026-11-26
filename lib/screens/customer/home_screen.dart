@@ -6,6 +6,8 @@ import '../../core/theme/app_theme.dart';
 import '../../models/category.dart';
 import '../../models/item.dart';
 import '../../state/app_scope.dart';
+import '../../widgets/caku_logo.dart';
+import '../../widgets/caku_search_field.dart';
 import '../../widgets/category_strip.dart';
 import '../../widgets/forest_header.dart';
 import '../../widgets/layout.dart';
@@ -17,13 +19,10 @@ import 'widgets/item_card.dart';
 
 /// Layar beranda customer: sapaan, pencarian, kategori, dan rekomendasi.
 ///
-/// Beranda sengaja tidak memuat banner promosi; fokusnya adalah discovery
-/// cepat menuju Katalog dan Detail Barang.
+/// Beranda adalah satu-satunya halaman dengan header besar (hero); halaman
+/// lain memakai AppBar biasa agar tidak berulang.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.onOpenProfile});
-
-  /// Mengalihkan ke tab Profil pada shell customer.
-  final VoidCallback? onOpenProfile;
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -120,13 +119,14 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
               child: ForestHeader(
                 hero: true,
-                height: 200,
+                height: 210,
                 eyebrow: 'Halo, $name',
                 title: 'Siap berpetualang?',
                 subtitle: 'Perlengkapan camping siap menemani perjalananmu.',
                 actions: [
-                  // Keranjang dan Profil berdampingan di kanan agar konsisten
-                  // dengan header Katalog dan Sewa.
+                  // Logo menandai merek, keranjang selalu di kanan. Profil
+                  // tidak diulang karena sudah ada di bottom navigation.
+                  const CakuLogoMark(size: 34),
                   const Spacer(),
                   ForestHeaderAction(
                     icon: Icons.shopping_cart_outlined,
@@ -134,27 +134,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     badgeCount: cart.totalQuantity,
                     onTap: _openCart,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  ForestHeaderAction(
-                    icon: Icons.person_outline_rounded,
-                    tooltip: 'Profil',
-                    onTap: widget.onOpenProfile,
-                  ),
                 ],
               ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.screen,
-                AppSpacing.lg,
+                AppSpacing.xl,
                 AppSpacing.screen,
                 AppSpacing.xxl,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SearchTrigger(onTap: () => _openCatalog(autofocus: true)),
-                  const SizedBox(height: AppSpacing.xl),
+                  CakuSearchField(
+                    readOnly: true,
+                    onTap: () => _openCatalog(autofocus: true),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
                   if (_categories.isNotEmpty) ...[
                     const SectionHeader(title: 'Kategori'),
                     const SizedBox(height: AppSpacing.md),
@@ -163,17 +160,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: EdgeInsets.zero,
                       onSelect: (id) => _openCatalog(categoryId: id),
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: AppSpacing.xxl),
                   ],
                   SectionHeader(
                     title: 'Rekomendasi',
                     actionLabel: 'Lihat semua',
                     onAction: () => _openCatalog(),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.lg),
                   _buildGrid(),
-                  const SizedBox(height: AppSpacing.xl),
-                  const _PickupNote(),
                 ],
               ),
             ),
@@ -215,105 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => _openDetail(item),
         );
       },
-    );
-  }
-}
-
-class _SearchTrigger extends StatelessWidget {
-  const _SearchTrigger({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.search_rounded, color: AppColors.moss, size: 21),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Cari perlengkapan camping...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Pengingat bahwa pengambilan barang dilakukan langsung di lokasi.
-class _PickupNote extends StatelessWidget {
-  const _PickupNote();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.forestSurface,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: const Icon(
-              Icons.storefront_outlined,
-              size: 20,
-              color: AppColors.forest,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Ambil langsung di lokasi',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Barang diambil di lokasi penyewaan CAKU sesuai jadwal sewa '
-                  'yang disetujui. Tidak ada pengiriman ke alamat.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/caku_logo.dart';
-import '../../widgets/forest_pattern.dart';
 import '../../widgets/layout.dart';
 
 /// Kerangka layar autentikasi: panel merek di layar lebar, header ringkas
-/// di ponsel. Form tampil langsung di atas latar bersih (tanpa kartu) agar
-/// judul dan isian menjadi fokus utama.
+/// di ponsel. Judul dan keterangan berada di luar kartu, sedangkan seluruh
+/// isian form berada di dalam satu kartu agar fokus pengguna jelas.
 class AuthShell extends StatelessWidget {
   const AuthShell({
     super.key,
@@ -65,19 +64,12 @@ class AuthShell extends StatelessWidget {
               ),
               child: ResponsiveFrame(
                 padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _MobileBrandHeader(),
-                    const SizedBox(height: AppSpacing.xl),
-                    _FormContent(
-                      title: title,
-                      subtitle: subtitle,
-                      footer: footer,
-                      onBack: onBack,
-                      child: child,
-                    ),
-                  ],
+                child: _FormContent(
+                  title: title,
+                  subtitle: subtitle,
+                  footer: footer,
+                  onBack: onBack,
+                  child: child,
                 ),
               ),
             );
@@ -88,6 +80,7 @@ class AuthShell extends StatelessWidget {
   }
 }
 
+/// Panel merek di layar lebar: foto hutan, logo, dan poin keunggulan.
 class _BrandPanel extends StatelessWidget {
   const _BrandPanel();
 
@@ -97,7 +90,7 @@ class _BrandPanel extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image.asset(
-          'asset/forest-header.jpg',
+          'asset/images/branding/forest-header.jpg',
           fit: BoxFit.cover,
           filterQuality: FilterQuality.medium,
           errorBuilder: (context, error, stack) =>
@@ -110,11 +103,6 @@ class _BrandPanel extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [Color(0xB310241F), Color(0xF210241F)],
             ),
-          ),
-        ),
-        const Positioned.fill(
-          child: IgnorePointer(
-            child: ForestPattern(color: AppColors.sage, opacity: 0.12),
           ),
         ),
         Padding(
@@ -198,20 +186,6 @@ class _BrandPoint extends StatelessWidget {
   }
 }
 
-/// Header merek ringkas di ponsel: hanya logo resmi (tidak ada ilustrasi
-/// tambahan karena asetnya memang tidak tersedia).
-class _MobileBrandHeader extends StatelessWidget {
-  const _MobileBrandHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Align(
-      alignment: Alignment.centerLeft,
-      child: CakuLogo(size: 56, showFrame: true),
-    );
-  }
-}
-
 class _FormArea extends StatelessWidget {
   const _FormArea({
     required this.title,
@@ -252,7 +226,8 @@ class _FormArea extends StatelessWidget {
   }
 }
 
-/// Judul tebal + sub-judul muted, diikuti form dan tautan pindah halaman.
+/// Logo, judul dan sub-judul di tengah, lalu form di dalam kartu dan tautan
+/// pindah halaman di bawahnya (di luar kartu).
 class _FormContent extends StatelessWidget {
   const _FormContent({
     required this.title,
@@ -283,16 +258,31 @@ class _FormContent extends StatelessWidget {
               label: const Text('Kembali'),
             ),
           ),
-        Text(title, style: Theme.of(context).textTheme.displayLarge),
+        const Center(child: CakuLogo(size: 64, showFrame: true)),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displayLarge,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Text(
           subtitle,
+          textAlign: TextAlign.center,
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.xl),
-        child,
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: child,
+        ),
         if (footer != null) ...[const SizedBox(height: AppSpacing.lg), footer!],
       ],
     );

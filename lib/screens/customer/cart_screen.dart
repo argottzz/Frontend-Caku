@@ -482,6 +482,17 @@ class _CartLineCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (item.originalPrice == null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Harga asli belum diisi. Barang belum dapat disewa.',
+                        style: const TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

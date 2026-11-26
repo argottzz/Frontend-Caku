@@ -9,8 +9,9 @@ import '../../models/category.dart';
 import '../../models/item.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
+import '../../widgets/caku_app_bar.dart';
+import '../../widgets/caku_search_field.dart';
 import '../../widgets/category_strip.dart';
-import '../../widgets/forest_header.dart';
 import '../../widgets/state_views.dart';
 import 'cart_screen.dart';
 import 'item_detail_screen.dart';
@@ -208,6 +209,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: CakuAppBar(
+        title: 'Katalog',
+        showBack: canPop,
+        onCartTap: _openCart,
+        cartBadge: cart.totalQuantity,
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.forest,
@@ -216,46 +223,19 @@ class _CatalogScreenState extends State<CatalogScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.paddingOf(context).top,
-                ),
-                child: ForestHeader(
-                  height: 168,
-                  eyebrow: 'Katalog CAKU',
-                  title: 'Jelajahi',
-                  subtitle: 'Temukan perlengkapan untuk petualanganmu.',
-                  actions: [
-                    if (canPop)
-                      ForestHeaderAction(
-                        icon: Icons.arrow_back_rounded,
-                        tooltip: 'Kembali',
-                        onTap: () => Navigator.of(context).maybePop(),
-                      ),
-                    const Spacer(),
-                    ForestHeaderAction(
-                      icon: Icons.shopping_cart_outlined,
-                      tooltip: 'Keranjang',
-                      badgeCount: cart.totalQuantity,
-                      onTap: _openCart,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screen,
                   AppSpacing.lg,
                   AppSpacing.screen,
-                  AppSpacing.sm,
+                  AppSpacing.md,
                 ),
                 child: Row(
                   children: [
                     Expanded(
-                      child: _SearchField(
+                      child: CakuSearchField(
                         controller: _searchController,
                         focusNode: _searchFocus,
+                        hintText: 'Cari tenda, sleeping bag, kompor...',
                         onChanged: _onSearchChanged,
                         onClear: () {
                           _searchController.clear();
@@ -273,17 +253,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: CategoryStrip(
-                categories: _categories,
-                selectedId: _categoryId,
-                onSelect: _selectCategory,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: CategoryStrip(
+                  categories: _categories,
+                  selectedId: _categoryId,
+                  onSelect: _selectCategory,
+                ),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screen,
-                  AppSpacing.sm,
+                  AppSpacing.md,
                   AppSpacing.screen,
                   0,
                 ),
@@ -405,45 +388,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
         ),
       ),
     ];
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  const _SearchField({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-    this.focusNode,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-  final FocusNode? focusNode;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      onChanged: onChanged,
-      textInputAction: TextInputAction.search,
-      decoration: InputDecoration(
-        hintText: 'Cari tenda, sleeping bag, kompor...',
-        prefixIcon: const Icon(Icons.search_rounded, size: 21),
-        suffixIcon: controller.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Hapus pencarian',
-                onPressed: onClear,
-                icon: const Icon(Icons.close_rounded, size: 18),
-              ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-      ),
-    );
   }
 }
 

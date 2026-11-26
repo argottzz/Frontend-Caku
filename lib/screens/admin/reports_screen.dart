@@ -13,7 +13,7 @@ import '../../widgets/layout.dart';
 import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_filter_bar.dart';
-import '../rental_detail_screen.dart';
+import '../shared/rental_detail_screen.dart';
 
 /// Isi tab Laporan pada [AdminDashboardScreen].
 ///

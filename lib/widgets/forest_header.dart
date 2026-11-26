@@ -5,9 +5,9 @@ import '../core/theme/app_theme.dart';
 
 /// Header bergambar hutan dengan gradien hijau pinus.
 ///
-/// Dipakai di tab utama (Home, Dashboard, Katalog, Sewa, Profil) sebagai
-/// pembuka layar. Jika foto gagal dimuat, gradien pinus tetap tampil sehingga
-/// teks putih tidak pernah kehilangan kontras.
+/// Hanya dipakai di Beranda sebagai header pembuka; halaman lain memakai
+/// [CakuAppBar] biasa. Jika foto gagal dimuat, gradien pinus tetap tampil
+/// sehingga teks putih tidak pernah kehilangan kontras.
 class ForestHeader extends StatelessWidget {
   const ForestHeader({
     super.key,
@@ -53,7 +53,7 @@ class ForestHeader extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              'asset/forest-header.jpg',
+              'asset/images/branding/forest-header.jpg',
               fit: BoxFit.cover,
               alignment: hero ? Alignment.center : Alignment.topCenter,
               filterQuality: FilterQuality.medium,

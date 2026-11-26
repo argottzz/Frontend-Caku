@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
@@ -15,7 +15,7 @@ import '../../widgets/form_widgets.dart';
 import '../../widgets/image_source_field.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
-import '../rental_detail_screen.dart';
+import '../shared/rental_detail_screen.dart';
 
 /// Pengajuan sewa: pilih periode, tinjau rincian, unggah bukti transfer, lalu
 /// kirim `POST /rentals` sebagai multipart.
@@ -64,6 +64,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   double _totalPerDay(List<CartLine> lines) =>
       lines.fold(0, (total, line) => total + line.subtotal);
+
+  bool get _hasMissingOriginalPrice {
+    final cart = CartScope.read(context);
+    return cart.lines.any((line) => !line.item.hasOriginalPrice);
+  }
 
   double _penaltyPerDay(List<CartLine> lines) => lines.fold(
     0,
@@ -147,13 +152,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _proofError = proofError;
       _formError = cart.isEmpty
           ? 'Keranjang kosong. Pilih perlengkapan terlebih dahulu.'
-          : null;
+          : (_hasMissingOriginalPrice
+                ? 'Harga asli salah satu barang belum diisi oleh Admin. '
+                      'Barang tersebut belum dapat disewa.'
+                : null);
     });
 
     if (startError != null ||
         endError != null ||
         proofError != null ||
-        cart.isEmpty) {
+        cart.isEmpty ||
+        _hasMissingOriginalPrice) {
       return;
     }
 
@@ -211,7 +220,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       appBar: CakuAppBar(
         title: 'Checkout',
-        subtitle: 'Info penyewa, periode, dan pembayaran',
         showBack: true,
       ),
       body: ListView(
@@ -232,6 +240,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   InlineNotice(
                     message: _formError!,
                     icon: Icons.error_outline_rounded,
+                    tone: NoticeTone.error,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (_hasMissingOriginalPrice) ...[
+                  InlineNotice(
+                    message:
+                        'Harga asli salah satu barang belum diisi oleh Admin. '
+                        'Barang tersebut belum dapat disewa.',
+                    icon: Icons.block_rounded,
                     tone: NoticeTone.error,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -443,7 +461,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 icon: Icons.send_rounded,
                 expand: false,
                 loading: _submitting,
-                onPressed: _submit,
+                onPressed: (_submitting || _hasMissingOriginalPrice)
+                    ? null
+                    : _submit,
               ),
             ],
           ),

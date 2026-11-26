@@ -49,8 +49,22 @@ abstract final class AppSnack {
             ],
           ),
           action: actionLabel != null && onAction != null
-              ? SnackBarAction(label: actionLabel, onPressed: onAction)
+              ? SnackBarAction(
+                  label: actionLabel,
+                  onPressed: () {
+                    // Tutup lebih dulu agar snack bar tidak tersangkut bila
+                    // aksi gagal (mis. context layar asal sudah dilepas).
+                    messenger.hideCurrentSnackBar(
+                      reason: SnackBarClosedReason.action,
+                    );
+                    onAction();
+                  },
+                )
               : null,
+          // Sejak Flutter 3.44 snack bar yang punya aksi bertahan terus bila
+          // `persist` tidak diatur. Semua snack bar di aplikasi ini harus
+          // hilang sendiri setelah durasi tampil.
+          persist: false,
           duration: const Duration(seconds: 3),
         ),
       );

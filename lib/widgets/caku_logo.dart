@@ -20,7 +20,7 @@ class CakuLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final image = Image.asset(
-      'asset/caku-logo.jpg',
+      'asset/images/branding/caku-logo.png',
       width: size,
       height: size,
       fit: BoxFit.contain,

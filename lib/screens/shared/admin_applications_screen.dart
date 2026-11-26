@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../core/network/api_exception.dart';
-import '../core/theme/app_colors.dart';
-import '../core/theme/app_theme.dart';
-import '../core/utils/formatters.dart';
-import '../state/app_scope.dart';
-import '../widgets/caku_app_bar.dart';
-import '../widgets/category_strip.dart';
-import '../widgets/state_views.dart';
-import '../widgets/status_badge.dart';
+import '../../core/network/api_exception.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
+import '../../state/app_scope.dart';
+import '../../widgets/caku_app_bar.dart';
+import '../../widgets/category_strip.dart';
+import '../../widgets/state_views.dart';
+import '../../widgets/status_badge.dart';
 import 'admin_application_panel.dart';
 import 'admin_application_review_panel.dart';
 
@@ -71,9 +71,6 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
                 title: isAdmin
                     ? 'Permohonan Admin'
                     : 'Permohonan Menjadi Admin',
-                subtitle: isAdmin
-                    ? 'Tinjau permohonan menjadi Admin'
-                    : 'Ajukan dan pantau status permohonan',
                 showBack: true,
               ),
         // IndexedStack menjaga daftar tetap hidup saat detail dibuka,

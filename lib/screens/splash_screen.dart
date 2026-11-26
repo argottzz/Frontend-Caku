@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 import '../widgets/caku_logo.dart';
-import '../widgets/forest_pattern.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,9 +44,6 @@ class _SplashScreenState extends State<SplashScreen>
         decoration: const BoxDecoration(color: AppColors.background),
         child: Stack(
           children: [
-            const Positioned.fill(
-              child: IgnorePointer(child: ForestPattern(opacity: 0.35)),
-            ),
             SafeArea(
               child: FadeTransition(
                 opacity: _fade,

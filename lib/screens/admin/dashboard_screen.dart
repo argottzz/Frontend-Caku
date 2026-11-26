@@ -7,17 +7,16 @@ import '../../core/utils/formatters.dart';
 import '../../models/report.dart';
 import '../../models/rental.dart';
 import '../../state/app_scope.dart';
-import '../../widgets/forest_header.dart';
-import '../../widgets/forest_pattern.dart';
+import '../../widgets/caku_app_bar.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
 
-import '../admin_applications_screen.dart';
+import '../shared/admin_applications_screen.dart';
 import 'item_form_screen.dart' show ItemFormScreen;
-import '../rental_detail_screen.dart';
-import '../rentals_screen.dart';
+import '../shared/rental_detail_screen.dart';
+import '../shared/rentals_screen.dart';
 import 'reports_screen.dart';
 
 /// Dashboard admin: dua tab dalam satu halaman.
@@ -85,29 +84,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: CakuAppBar(
+        title: 'Dashboard',
+        showBack: Navigator.of(context).canPop(),
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: ForestHeader(
-              height: 168,
-              eyebrow: 'CAKU Admin',
-              title: 'Dashboard',
-              subtitle: 'Ringkasan dan laporan operasional CAKU',
-              actions: [
-                // Dashboard adalah tab di shell admin, tapi juga dibuka lewat
-                // rute dari Profil (menu Laporan). Saat dibuka sebagai rute,
-                // sediakan jalan kembali.
-                if (Navigator.of(context).canPop())
-                  ForestHeaderAction(
-                    icon: Icons.arrow_back_rounded,
-                    tooltip: 'Kembali',
-                    onTap: () => Navigator.of(context).maybePop(),
-                  ),
-                const Spacer(),
-              ],
-            ),
-          ),
           _DashboardTabs(selected: _tab, onSelect: _selectTab),
           Expanded(
             child: IndexedStack(
@@ -527,69 +509,42 @@ class _HeroCard extends StatelessWidget {
           colors: [AppColors.forest, AppColors.pine],
         ),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            right: -30,
-            top: -50,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: AppColors.sage.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
-              ),
+          Text(
+            'Total pendapatan',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.sageLight,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                child: const ForestPattern(
-                  color: AppColors.sage,
-                  opacity: 0.12,
-                ),
-              ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            Formatters.rupiah(summary.totalPendapatan),
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textOnDark,
+              height: 1.15,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
-              Text(
-                'Total pendapatan',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.sageLight,
-                  fontWeight: FontWeight.w600,
-                ),
+              _HeroChip(
+                icon: Icons.receipt_long_rounded,
+                label: '${summary.totalTransaksi} transaksi',
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                Formatters.rupiah(summary.totalPendapatan),
-                style: const TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textOnDark,
-                  height: 1.15,
-                ),
+              _HeroChip(
+                icon: Icons.hourglass_top_rounded,
+                label: '${summary.pending} menunggu',
               ),
-              const SizedBox(height: AppSpacing.md),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  _HeroChip(
-                    icon: Icons.receipt_long_rounded,
-                    label: '${summary.totalTransaksi} transaksi',
-                  ),
-                  _HeroChip(
-                    icon: Icons.hourglass_top_rounded,
-                    label: '${summary.pending} menunggu',
-                  ),
-                  _HeroChip(
-                    icon: Icons.backpack_outlined,
-                    label: '${summary.ongoing} berjalan',
-                  ),
-                ],
+              _HeroChip(
+                icon: Icons.backpack_outlined,
+                label: '${summary.ongoing} berjalan',
               ),
             ],
           ),

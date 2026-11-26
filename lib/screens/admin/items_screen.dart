@@ -11,6 +11,7 @@ import '../../models/item.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
+import '../../widgets/caku_search_field.dart';
 import '../../widgets/category_strip.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/item_image.dart';
@@ -175,16 +176,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
     return Scaffold(
       appBar: CakuAppBar(
         title: 'Kelola barang',
-        subtitle: 'Tambah, ubah, dan hapus perlengkapan',
         // ItemsScreen adalah tab shell admin, tetapi juga dibuka sebagai rute
         // dari aksi cepat dashboard; sediakan jalan kembali saat itu terjadi.
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                tooltip: 'Kembali',
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.arrow_back_rounded),
-              )
-            : null,
+        showBack: Navigator.of(context).canPop(),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
@@ -209,24 +203,14 @@ class _ItemsScreenState extends State<ItemsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextField(
+                  CakuSearchField(
                     controller: _searchController,
+                    hintText: 'Cari nama barang...',
                     onChanged: _onSearchChanged,
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      hintText: 'Cari nama barang...',
-                      prefixIcon: const Icon(Icons.search_rounded, size: 21),
-                      suffixIcon: _searchController.text.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: 'Hapus pencarian',
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearchChanged('');
-                              },
-                              icon: const Icon(Icons.close_rounded, size: 18),
-                            ),
-                    ),
+                    onClear: () {
+                      _searchController.clear();
+                      _onSearchChanged('');
+                    },
                   ),
                   if (_categories.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.md),
@@ -237,7 +221,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                       onSelect: _selectCategory,
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.xl),
                   SectionHeader(
                     title: 'Daftar barang',
                     subtitle: _loading
@@ -398,6 +382,17 @@ class _AdminItemCard extends StatelessWidget {
                   'Stok ${item.stok} · Denda '
                   '${Formatters.rupiah(item.dendaHarian)}/hari',
                   style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  item.originalPrice == null
+                      ? 'Harga asli: belum diisi'
+                      : 'Harga asli: ${Formatters.rupiah(item.originalPrice!)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: item.originalPrice == null
+                        ? AppColors.warning
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),

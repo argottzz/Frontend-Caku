@@ -10,6 +10,7 @@ import '../../widgets/app_snack.dart';
 import '../../widgets/item_image.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/quantity_stepper.dart';
+import '../../widgets/state_views.dart';
 import 'cart_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
@@ -60,6 +61,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   void _addToCart() {
     final cart = CartScope.read(context);
+    final navigator = Navigator.of(context);
     var added = 0;
     for (var index = 0; index < _quantity; index++) {
       if (cart.add(_item)) added++;
@@ -70,9 +72,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         '$added ${_item.nama} ditambahkan ke keranjang.',
         actionLabel: 'Lihat',
         onAction: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
+          navigator.push(
+            MaterialPageRoute<void>(builder: (_) => const CartScreen()),
+          );
         },
       );
     } else {
@@ -83,11 +85,48 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
+  void _openImage() {
+    if (_item.imageUrl.trim().isEmpty) return;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.all(AppSpacing.lg),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AspectRatio(
+              aspectRatio: 4 / 3,
+              child: ItemImage(
+                imageUrl: _item.imageUrl,
+                fit: BoxFit.contain,
+                borderRadius: 0,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Tutup'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
+  void _openCart() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
+  }
+
   Widget build(BuildContext context) {
     final inCart = CartScope.of(context).quantityFor(_item.id);
     final maxAddable = (_item.stok - inCart).clamp(0, _item.stok);
-    final canAdd = maxAddable > 0;
+    final canAdd = maxAddable > 0 && _item.originalPrice != null;
     final quantity = canAdd ? _quantity.clamp(1, maxAddable) : 1;
     final topInset = MediaQuery.of(context).padding.top;
 
@@ -101,15 +140,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 // Hero gambar edge-to-edge (4:3 sesuai design.md) dengan
                 // tombol kembali melayang.
                 SliverToBoxAdapter(
-                  child: Stack(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 4 / 3.4,
-                        child: ItemImage(
-                          imageUrl: _item.imageUrl,
-                          borderRadius: 0,
+                  child: GestureDetector(
+                    onTap: _openImage,
+                    child: Stack(
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 4 / 3.4,
+                          child: ItemImage(
+                            imageUrl: _item.imageUrl,
+                            borderRadius: 0,
+                          ),
                         ),
-                      ),
                       const Positioned.fill(
                         child: IgnorePointer(
                           child: DecoratedBox(
@@ -137,9 +178,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           onTap: () => Navigator.of(context).pop(),
                         ),
                       ),
+                      Positioned(
+                        top: topInset + AppSpacing.sm,
+                        right: AppSpacing.screen,
+                        child: _CartCircleButton(
+                          count: CartScope.of(context).totalQuantity,
+                          onTap: _openCart,
+                        ),
+                      ),
                       if (_refreshing)
                         Positioned(
-                          top: topInset + AppSpacing.sm,
+                          top: topInset + AppSpacing.sm + 52,
                           right: AppSpacing.screen,
                           child: _CircleAction(
                             icon: null,
@@ -154,6 +203,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         ),
                     ],
                   ),
+                ),
                 ),
                 // Konten utama menumpuk ke atas hero dengan sudut atas membulat.
                 SliverToBoxAdapter(
@@ -176,19 +226,76 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _KategoriPill(label: _item.namaKategori),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                _KategoriPill(label: _item.namaKategori),
+                                const Spacer(),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: _item.stok > 0
+                                            ? AppColors.success
+                                            : AppColors.error,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.xs),
+                                    Text(
+                                      _item.stok > 0
+                                          ? 'Tersedia: ${_item.stok} unit'
+                                          : 'Stok habis',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall?.copyWith(
+                                        color: _item.stok > 0
+                                            ? AppColors.textSecondary
+                                            : AppColors.error,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: AppSpacing.md),
                             Text(
                               _item.nama,
                               style: Theme.of(context).textTheme.displayLarge,
                             ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              'Sewa harian · ${_item.namaKategori}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
                             const SizedBox(height: AppSpacing.lg),
-                            _SpecRow(item: _item),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _InfoCard(
+                                    icon: Icons.report_gmailerrorred_rounded,
+                                    label: 'Denda keterlambatan',
+                                    value:
+                                        '${Formatters.rupiah(_item.dendaHarian)}/hari',
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: _InfoCard(
+                                    icon: Icons.badge_outlined,
+                                    label: 'Jaminan sewa',
+                                    value: 'Wajib KTP / SIM',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_item.originalPrice == null) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              InlineNotice(
+                                message:
+                                    'Harga asli barang ini belum diisi Admin. '
+                                    'Barang belum dapat disewa.',
+                                tone: NoticeTone.warning,
+                              ),
+                            ],
                             const SizedBox(height: AppSpacing.xl),
                             Container(
                               width: double.infinity,
@@ -204,7 +311,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Deskripsi',
+                                    'Deskripsi & Kelengkapan',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.titleLarge,
@@ -217,6 +324,61 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     onToggle: () => setState(
                                       () => _descExpanded = !_descExpanded,
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            Text(
+                              'Ketentuan & Nilai Aset',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(AppSpacing.lg),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Estimasi nilai barang',
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
+                                        ),
+                                      ),
+                                      Text(
+                                        _item.originalPrice == null
+                                            ? 'Belum diisi'
+                                            : Formatters.rupiah(
+                                                _item.originalPrice!,
+                                              ),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    '* Digunakan sebagai acuan perhitungan '
+                                    'ganti rugi apabila terjadi kerusakan '
+                                    'berat atau kehilangan.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
                                   ),
                                 ],
                               ),
@@ -516,7 +678,7 @@ class _BottomActionBar extends StatelessWidget {
                 children: [
                   Text(
                     canAdd
-                        ? '${Formatters.rupiah(item.hargaSewaHarian * quantity)}/hari'
+                        ? '${Formatters.rupiah(item.hargaSewaHarian)}/hari'
                         : 'Stok habis',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -568,6 +730,120 @@ class _BottomActionBar extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// Tombol keranjang bulat di atas hero image dengan badge jumlah.
+class _CartCircleButton extends StatelessWidget {
+  const _CartCircleButton({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.shopping_cart_outlined,
+                color: AppColors.forest,
+                size: 20,
+              ),
+              if (count > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: AppColors.background,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      count > 99 ? '99+' : '$count',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 9,
+                        height: 1.3,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kartu informasi kecil berisi ikon, nilai utama, dan label.
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: AppColors.forest),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ],
       ),
     );
   }

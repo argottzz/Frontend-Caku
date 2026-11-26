@@ -11,6 +11,7 @@ class Item {
     required this.stok,
     required this.hargaSewaHarian,
     required this.dendaHarian,
+    this.originalPrice,
   });
 
   final int id;
@@ -22,8 +23,10 @@ class Item {
   final int stok;
   final double hargaSewaHarian;
   final double dendaHarian;
+  final double? originalPrice;
 
   bool get tersedia => stok > 0;
+  bool get hasOriginalPrice => originalPrice != null;
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
@@ -38,6 +41,7 @@ class Item {
           double.tryParse(Json.asString(json['harga_sewa_harian'], '0')) ?? 0,
       dendaHarian:
           double.tryParse(Json.asString(json['denda_harian'], '0')) ?? 0,
+      originalPrice: double.tryParse(Json.asString(json['original_price'], '')),
     );
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/caku_bottom_nav.dart';
-import '../profile_screen.dart';
-import '../rentals_screen.dart';
+import '../shared/profile_screen.dart';
+import '../shared/rentals_screen.dart';
 import 'home_screen.dart';
 
-/// Kerangka navigasi utama customer: Home, Profil (tengah), dan Sewa Saya.
+/// Kerangka navigasi utama customer: Home, Profil (tengah), dan Pesanan Saya.
 ///
 /// Katalog tidak lagi menjadi tab; halaman itu dibuka dari pencarian atau
 /// kategori di Beranda.
@@ -42,7 +42,7 @@ class _CustomerShellState extends State<CustomerShell> {
       body: IndexedStack(
         index: _index,
         children: [
-          HomeScreen(onOpenProfile: () => _select(_profileIndex)),
+          const HomeScreen(),
           const ProfileScreen(),
           RentalsScreen(key: ValueKey('rentals-$_rentalsEpoch')),
         ],
@@ -65,7 +65,7 @@ class _CustomerShellState extends State<CustomerShell> {
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Sewa Saya',
+            label: 'Pesanan Saya',
           ),
         ],
       ),

@@ -31,6 +31,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
   final _stokController = TextEditingController();
   final _hargaController = TextEditingController();
   final _dendaController = TextEditingController();
+  final _originalPriceController = TextEditingController();
 
   List<Category> _categories = const [];
   bool _loadingCategories = true;
@@ -52,6 +53,9 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
       _stokController.text = '${item.stok}';
       _hargaController.text = item.hargaSewaHarian.toStringAsFixed(2);
       _dendaController.text = item.dendaHarian.toStringAsFixed(2);
+      if (item.originalPrice != null) {
+        _originalPriceController.text = item.originalPrice!.toStringAsFixed(2);
+      }
       _categoryId = item.idKategori;
     }
     _loadCategories();
@@ -64,6 +68,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
     _stokController.dispose();
     _hargaController.dispose();
     _dendaController.dispose();
+    _originalPriceController.dispose();
     super.dispose();
   }
 
@@ -133,6 +138,9 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
           stok: stok,
           hargaSewaHarian: _hargaController.text.trim(),
           dendaHarian: _dendaController.text.trim(),
+          originalPrice: _originalPriceController.text.trim().isEmpty
+              ? null
+              : _originalPriceController.text.trim(),
           image: _image,
         );
       } else {
@@ -143,6 +151,9 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
           stok: stok,
           hargaSewaHarian: _hargaController.text.trim(),
           dendaHarian: _dendaController.text.trim(),
+          originalPrice: _originalPriceController.text.trim().isEmpty
+              ? null
+              : _originalPriceController.text.trim(),
           image: _image,
         );
       }
@@ -165,6 +176,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
             error.fieldError('stok') ??
             error.fieldError('harga_sewa_harian') ??
             error.fieldError('denda_harian') ??
+            error.fieldError('original_price') ??
             error.message;
       });
       AppSnack.error(context, error.message);
@@ -186,7 +198,6 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
     return Scaffold(
       appBar: CakuAppBar(
         title: _isEdit ? 'Edit Barang' : 'Tambah Barang',
-        subtitle: _isEdit ? item?.nama : 'Isi data perlengkapan baru',
         showBack: true,
       ),
       body: Form(
@@ -329,6 +340,32 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                             dendaField,
                           ],
                         );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _originalPriceController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Harga asli barang',
+                        prefixText: 'Rp ',
+                        helperText:
+                            'Kosongkan jika belum diisi. Barang tanpa harga '
+                            'asli tidak dapat disewa.',
+                      ),
+                      validator: (value) {
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) return null;
+                        if (Validators.money(text) != null) {
+                          return 'Format nominal tidak valid.';
+                        }
+                        final parsed = double.tryParse(text);
+                        if (parsed == null)
+                          return 'Format nominal tidak valid.';
+                        if (parsed < 0) return 'Nominal tidak boleh negatif.';
+                        return null;
                       },
                     ),
                     const SizedBox(height: AppSpacing.xl),

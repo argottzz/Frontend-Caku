@@ -55,4 +55,30 @@ flutter test
 ## Dokumentasi
 
 - `docs/API_MAPPING.md` — endpoint backend aktual dan pemetaan layar.
-- `asset/CREDITS.md` — kredit foto stok yang dipakai aplikasi.
+- `docs/DESIGN_GUIDELINES.md` — arahan UI/UX (nuansa hutan) aplikasi.
+- `asset/images/CREDITS.md` — kredit foto stok yang dipakai aplikasi.
+
+## Struktur folder
+
+```text
+lib/
+  core/       config, network, storage, theme, utils (dipakai lintas fitur)
+  data/       service pemanggilan API
+  models/     model data
+  state/      controller dan AppScope
+  widgets/    widget bersama (tombol, kartu, header, dialog)
+  screens/
+    auth/       login, register
+    onboarding/ onboarding
+    customer/   home, katalog, cart, checkout, detail item
+    admin/      shell, dashboard, barang, laporan
+    shared/     layar yang dipakai customer dan admin
+                (profil, transaksi, detail transaksi, permohonan admin)
+asset/
+  fonts/      font Plus Jakarta Sans
+  images/
+    branding/   logo dan header hutan
+    onboarding/ ilustrasi onboarding
+    products/   foto produk (sumber unggahan admin, tidak dibundel)
+docs/         dokumentasi API dan desain
+```

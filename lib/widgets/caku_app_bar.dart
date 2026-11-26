@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
-import 'caku_logo.dart';
 
-/// AppBar konsisten dengan logo resmi CAKU.
+/// AppBar konsisten untuk seluruh halaman: judul dan subjudul ditengahkan
+/// tanpa ikon pendamping, sedangkan aksi (mis. keranjang) selalu di kanan.
+///
+/// Dipakai semua layar kecuali Beranda, yang memakai header besar sebagai
+/// pembuka aplikasi.
 class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CakuAppBar({
     super.key,
@@ -13,8 +16,9 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.showBack = false,
     this.bottom,
-    this.transparent = false,
     this.leading,
+    this.onCartTap,
+    this.cartBadge = 0,
   });
 
   final String title;
@@ -27,8 +31,10 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final PreferredSizeWidget? bottom;
 
-  /// Latar transparan untuk app bar di atas header bergambar.
-  final bool transparent;
+  /// Bila diisi, ikon keranjang tampil sebagai aksi paling kanan dengan posisi
+  /// yang sama di semua halaman.
+  final VoidCallback? onCartTap;
+  final int cartBadge;
 
   @override
   Size get preferredSize =>
@@ -36,52 +42,108 @@ class CakuAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = transparent ? AppColors.white : AppColors.textPrimary;
     return AppBar(
-      backgroundColor: transparent ? Colors.transparent : AppColors.background,
-      foregroundColor: foreground,
-      automaticallyImplyLeading: showBack && leading == null,
+      backgroundColor: AppColors.background,
+      foregroundColor: AppColors.textPrimary,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      automaticallyImplyLeading: false,
       leading:
           leading ??
           (showBack
-              ? null
-              : const Padding(
-                  padding: EdgeInsets.only(
-                    left: AppSpacing.lg,
-                    right: AppSpacing.xs,
-                  ),
-                  child: CakuLogoMark(size: 34),
-                )),
-      leadingWidth: leading != null || !showBack ? 58 : null,
-      titleSpacing: showBack ? 0 : AppSpacing.sm,
+              ? IconButton(
+                  tooltip: 'Kembali',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                )
+              : null),
+      titleSpacing: AppSpacing.sm,
       title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 18,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.2,
-              color: foreground,
+              letterSpacing: 0.1,
+              color: AppColors.textPrimary,
             ),
           ),
           if (subtitle != null)
             Text(
               subtitle!,
-              style: TextStyle(
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: transparent
-                    ? AppColors.sageLight
-                    : AppColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
         ],
       ),
-      actions: actions,
+      actions: [
+        ...?actions,
+        if (onCartTap != null)
+          CartButton(quantity: cartBadge, onTap: onCartTap!),
+        const SizedBox(width: AppSpacing.sm),
+      ],
       bottom: bottom,
+    );
+  }
+}
+
+/// Ikon keranjang di kanan AppBar, dipakai semua halaman agar posisinya
+/// konsisten.
+class CartButton extends StatelessWidget {
+  const CartButton({super.key, required this.quantity, required this.onTap});
+
+  final int quantity;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          onPressed: onTap,
+          tooltip: 'Keranjang',
+          icon: const Icon(Icons.shopping_cart_outlined, size: 22),
+        ),
+        if (quantity > 0)
+          Positioned(
+            right: 4,
+            top: 4,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 17),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.forest,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: AppColors.background, width: 1.5),
+              ),
+              child: Text(
+                quantity > 99 ? '99+' : '$quantity',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 9,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

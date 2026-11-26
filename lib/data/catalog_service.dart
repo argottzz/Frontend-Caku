@@ -52,18 +52,23 @@ class CatalogService {
     required int stok,
     required String hargaSewaHarian,
     required String dendaHarian,
+    String? originalPrice,
     FileUpload? image,
   }) async {
+    final fields = <String, String>{
+      'id_kategori': '$idKategori',
+      'nama_item': nama,
+      'deskripsi': deskripsi,
+      'stok': '$stok',
+      'harga_sewa_harian': hargaSewaHarian,
+      'denda_harian': dendaHarian,
+    };
+    if (originalPrice != null && originalPrice.trim().isNotEmpty) {
+      fields['original_price'] = originalPrice.trim();
+    }
     final response = await _client.postMultipart(
       '/items',
-      fields: {
-        'id_kategori': '$idKategori',
-        'nama_item': nama,
-        'deskripsi': deskripsi,
-        'stok': '$stok',
-        'harga_sewa_harian': hargaSewaHarian,
-        'denda_harian': dendaHarian,
-      },
+      fields: fields,
       files: {'image': ?image},
     );
     return Item.fromJson(response.dataMap);
@@ -77,18 +82,23 @@ class CatalogService {
     required int stok,
     required String hargaSewaHarian,
     required String dendaHarian,
+    String? originalPrice,
     FileUpload? image,
   }) async {
+    final fields = <String, String>{
+      'id_kategori': '$idKategori',
+      'nama_item': nama,
+      'deskripsi': deskripsi,
+      'stok': '$stok',
+      'harga_sewa_harian': hargaSewaHarian,
+      'denda_harian': dendaHarian,
+    };
+    if (originalPrice != null && originalPrice.trim().isNotEmpty) {
+      fields['original_price'] = originalPrice.trim();
+    }
     final response = await _client.putMultipart(
       '/items/$id',
-      fields: {
-        'id_kategori': '$idKategori',
-        'nama_item': nama,
-        'deskripsi': deskripsi,
-        'stok': '$stok',
-        'harga_sewa_harian': hargaSewaHarian,
-        'denda_harian': dendaHarian,
-      },
+      fields: fields,
       files: {'image': ?image},
     );
     return Item.fromJson(response.dataMap);
