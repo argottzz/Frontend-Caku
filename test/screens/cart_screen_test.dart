@@ -64,7 +64,13 @@ void main() {
     expect(find.text('Rp 100.000'), findsWidgets);
 
     await tester.tap(find.byTooltip('Hapus dari keranjang'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hapus dari keranjang?'), findsOneWidget);
+    expect(cart.isEmpty, isFalse);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Hapus'));
+    await tester.pumpAndSettle();
 
     expect(cart.isEmpty, isTrue);
     expect(find.text('Keranjang masih kosong'), findsOneWidget);

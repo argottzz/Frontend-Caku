@@ -84,6 +84,12 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Memperbarui data user dari response backend (mis. setelah upload foto profil).
+  void setUser(User user) {
+    _user = user;
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     _sessionExpired = false;
     _user = null;

@@ -62,7 +62,9 @@ class _ImageSourceFieldState extends State<ImageSourceField> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.modal),
+        ),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -228,7 +230,7 @@ class _ImageSourceFieldState extends State<ImageSourceField> {
           const Icon(
             Icons.add_photo_alternate_outlined,
             size: 30,
-            color: AppColors.gray,
+            color: AppColors.textSecondary,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(

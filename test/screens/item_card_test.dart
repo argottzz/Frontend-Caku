@@ -27,10 +27,7 @@ void main() {
           body: SizedBox(
             width: 200,
             height: 300,
-            child: ItemCard(
-              item: sampleItem(),
-              onTap: () {},
-            ),
+            child: ItemCard(item: sampleItem(), onTap: () {}),
           ),
         ),
       ),
@@ -51,10 +48,7 @@ void main() {
           body: SizedBox(
             width: 200,
             height: 300,
-            child: ItemCard(
-              item: sampleItem(stock: 0),
-              onTap: () {},
-            ),
+            child: ItemCard(item: sampleItem(stock: 0), onTap: () {}),
           ),
         ),
       ),

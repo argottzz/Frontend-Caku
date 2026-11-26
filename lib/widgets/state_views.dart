@@ -137,13 +137,13 @@ class EmptyView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 72,
+              height: 72,
               decoration: const BoxDecoration(
                 color: AppColors.forestSurface,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: AppColors.forest, size: 28),
+              child: Icon(icon, color: AppColors.forest, size: 30),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -173,11 +173,15 @@ class InlineNotice extends StatelessWidget {
   const InlineNotice({
     super.key,
     required this.message,
+    this.title,
     this.icon = Icons.info_outline_rounded,
     this.tone = NoticeTone.info,
   });
 
   final String message;
+
+  /// Judul opsional untuk notice yang butuh hierarki dua tingkat.
+  final String? title;
   final IconData icon;
   final NoticeTone tone;
 
@@ -185,7 +189,7 @@ class InlineNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final (background, foreground) = switch (tone) {
       NoticeTone.info => (AppColors.infoSurface, AppColors.info),
-      NoticeTone.warning => (AppColors.warningSurface, AppColors.warning),
+      NoticeTone.warning => (AppColors.warningSurface, AppColors.warningText),
       NoticeTone.error => (AppColors.errorSurface, AppColors.error),
       NoticeTone.success => (AppColors.successSurface, AppColors.success),
     };
@@ -202,12 +206,28 @@ class InlineNotice extends StatelessWidget {
           Icon(icon, size: 18, color: foreground),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (title != null) ...[
+                  Text(
+                    title!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: foreground,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -6,14 +6,21 @@ import '../../core/theme/app_theme.dart';
 import '../../models/category.dart';
 import '../../models/item.dart';
 import '../../state/app_scope.dart';
+import '../../widgets/caku_logo.dart';
+import '../../widgets/caku_search_field.dart';
+import '../../widgets/category_strip.dart';
+import '../../widgets/forest_header.dart';
+import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
+import 'cart_screen.dart';
 import 'catalog_screen.dart';
 import 'item_detail_screen.dart';
-import '../profile_screen.dart';
 import 'widgets/item_card.dart';
-import 'cart_screen.dart';
 
-/// Layar beranda customer: sapaan, pencarian, hero, kategori, dan rekomendasi.
+/// Layar beranda customer: sapaan, pencarian, kategori, dan rekomendasi.
+///
+/// Beranda adalah satu-satunya halaman dengan header besar (hero); halaman
+/// lain memakai AppBar biasa agar tidak berulang.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,6 +29,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const int _previewCount = 6;
+
   List<Category> _categories = const [];
   List<Item> _items = const [];
   bool _loading = true;
@@ -42,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final services = AppScope.read(context);
       final results = await Future.wait([
         services.catalog.categories(),
-        services.catalog.items(page: 1, limit: 8),
+        services.catalog.items(page: 1, limit: _previewCount),
       ]);
       if (!mounted) return;
       setState(() {
@@ -86,9 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openCart() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const CartScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
   }
 
   @override
@@ -99,309 +108,108 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _load,
-          color: AppColors.forest,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.screen,
-              AppSpacing.md,
-              AppSpacing.screen,
-              AppSpacing.xxl,
-            ),
-            children: [
-              _Header(
-                name: name,
-                cartCount: cart.totalQuantity,
-                onCart: _openCart,
-                onProfile: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const ProfileScreen(showBack: true),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _SearchTrigger(onTap: () => _openCatalog(autofocus: true)),
-              const SizedBox(height: AppSpacing.lg),
-              _HeroBanner(onTap: () => _openCatalog()),
-              const SizedBox(height: AppSpacing.xl),
-              if (_categories.isNotEmpty) ...[
-                Text('Kategori', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: AppSpacing.sm),
-                SizedBox(
-                  height: 40,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      return ActionChip(
-                        label: Text(category.nama),
-                        onPressed: () => _openCatalog(categoryId: category.id),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-              ],
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Rekomendasi',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.forest,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+              child: ForestHeader(
+                hero: true,
+                height: 210,
+                eyebrow: 'Halo, $name',
+                title: 'Siap berpetualang?',
+                subtitle: 'Perlengkapan camping siap menemani perjalananmu.',
+                actions: [
+                  // Logo menandai merek, keranjang selalu di kanan. Profil
+                  // tidak diulang karena sudah ada di bottom navigation.
+                  const CakuLogoMark(size: 34),
+                  const Spacer(),
+                  ForestHeaderAction(
+                    icon: Icons.shopping_cart_outlined,
+                    tooltip: 'Keranjang',
+                    badgeCount: cart.totalQuantity,
+                    onTap: _openCart,
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              if (_loading)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 6,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: AppSpacing.md,
-                    mainAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 0.6,
-                  ),
-                  itemBuilder: (_, _) => const ItemCardSkeleton(),
-                )
-              else if (_error != null)
-                ErrorView(message: _error!, onRetry: _load)
-              else if (_items.isEmpty)
-                EmptyView(
-                  icon: Icons.terrain_rounded,
-                  title: 'Belum ada perlengkapan',
-                  message: 'Coba muat ulang nanti.',
-                  actionLabel: 'Muat ulang',
-                  onAction: _load,
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _items.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: AppSpacing.md,
-                    mainAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 0.6,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = _items[index];
-                    return ItemCard(
-                      key: ValueKey(item.id),
-                      item: item,
-                      onTap: () => _openDetail(item),
-                    );
-                  },
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.name,
-    required this.cartCount,
-    required this.onCart,
-    required this.onProfile,
-  });
-
-  final String name;
-  final int cartCount;
-  final VoidCallback onCart;
-  final VoidCallback onProfile;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Halo, $name',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Siap berpetualang?',
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          width: 44,
-          height: 44,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                onPressed: onCart,
-                icon: const Icon(Icons.shopping_cart_outlined),
-                tooltip: 'Keranjang',
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surface,
-                  foregroundColor: AppColors.textPrimary,
-                  shape: const CircleBorder(),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-              ),
-              if (cartCount > 0)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$cartCount',
-                      style: const TextStyle(
-                        color: AppColors.textOnOrange,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        SizedBox(
-          width: 44,
-          height: 44,
-          child: IconButton(
-            onPressed: onProfile,
-            icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'Profil',
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.surface,
-              foregroundColor: AppColors.textPrimary,
-              shape: const CircleBorder(),
-              side: const BorderSide(color: AppColors.border),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SearchTrigger extends StatelessWidget {
-  const _SearchTrigger({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.controlBorder),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.search_rounded, color: AppColors.textSecondary),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Cari perlengkapan camping...',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              'asset/onboarding-1.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(color: AppColors.forest),
-            ),
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xCC1F1A14)],
-                ),
-              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                AppSpacing.xl,
+                AppSpacing.screen,
+                AppSpacing.xxl,
+              ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Siapkan Petualanganmu!',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          color: AppColors.white,
-                        ),
+                  CakuSearchField(
+                    readOnly: true,
+                    onTap: () => _openCatalog(autofocus: true),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: 180,
-                    child: FilledButton(
-                      onPressed: onTap,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.white,
-                        foregroundColor: AppColors.forest,
-                        minimumSize: const Size(0, 44),
-                      ),
-                      child: const Text('Jelajahi Sekarang'),
+                  const SizedBox(height: AppSpacing.xxl),
+                  if (_categories.isNotEmpty) ...[
+                    const SectionHeader(title: 'Kategori'),
+                    const SizedBox(height: AppSpacing.md),
+                    CategoryStrip(
+                      categories: _categories,
+                      padding: EdgeInsets.zero,
+                      onSelect: (id) => _openCatalog(categoryId: id),
                     ),
+                    const SizedBox(height: AppSpacing.xxl),
+                  ],
+                  SectionHeader(
+                    title: 'Rekomendasi',
+                    actionLabel: 'Lihat semua',
+                    onAction: () => _openCatalog(),
                   ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildGrid(),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildGrid() {
+    if (_loading) {
+      return ItemGrid(
+        itemCount: _previewCount,
+        itemBuilder: (_, _) => const ItemCardSkeleton(),
+      );
+    }
+
+    if (_error != null) {
+      return ErrorView(message: _error!, onRetry: _load);
+    }
+
+    if (_items.isEmpty) {
+      return EmptyView(
+        icon: Icons.terrain_rounded,
+        title: 'Belum ada perlengkapan',
+        message: 'Coba muat ulang nanti.',
+        actionLabel: 'Muat ulang',
+        onAction: _load,
+      );
+    }
+
+    return ItemGrid(
+      itemCount: _items.length,
+      itemBuilder: (context, index) {
+        final item = _items[index];
+        return ItemCard(
+          key: ValueKey(item.id),
+          item: item,
+          onTap: () => _openDetail(item),
+        );
+      },
     );
   }
 }

@@ -15,6 +15,7 @@ const Item _item = Item(
   stok: 3,
   hargaSewaHarian: 50000,
   dendaHarian: 10000,
+  originalPrice: 500000,
 );
 
 void main() {

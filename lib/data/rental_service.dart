@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import '../core/network/api_client.dart';
-import '../models/json_utils.dart';
 import '../models/rental.dart';
 
 class RentalPage {
@@ -9,16 +8,6 @@ class RentalPage {
 
   final List<Rental> rentals;
   final Pagination? pagination;
-}
-
-class ReturnResult {
-  const ReturnResult({
-    required this.rental,
-    required this.perluPenyesuaianStok,
-  });
-
-  final Rental rental;
-  final bool perluPenyesuaianStok;
 }
 
 class RentalService {
@@ -82,7 +71,7 @@ class RentalService {
     return Rental.fromJson(response.dataMap);
   }
 
-  Future<ReturnResult> processReturn({
+  Future<ReturnRentalResult> processReturn({
     required int id,
     required DateTime tanggalKembaliAktual,
     required String kondisiPengembalian,
@@ -98,12 +87,15 @@ class RentalService {
           'catatan_pengembalian': catatanPengembalian.trim(),
       },
     );
-    return ReturnResult(
-      rental: Rental.fromJson(response.dataMap),
-      perluPenyesuaianStok: Json.asBool(
-        response.dataMap['perlu_penyesuaian_stok'],
-      ),
+    return ReturnRentalResult.fromJson(response.dataMap);
+  }
+
+  Future<RentalReplacement> completeReplacement(int id) async {
+    final response = await _client.patch(
+      '/rentals/$id/replacement',
+      body: {'status': 'Completed'},
     );
+    return RentalReplacement.fromJson(response.dataMap);
   }
 
   static String _ymd(DateTime value) {

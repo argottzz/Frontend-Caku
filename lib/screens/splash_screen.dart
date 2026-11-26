@@ -40,64 +40,80 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fade,
-          child: ScaleTransition(
-            scale: _scale,
-            child: Stack(
-              children: [
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(color: AppColors.background),
+        child: Stack(
+          children: [
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fade,
+                child: ScaleTransition(
+                  scale: _scale,
+                  child: Stack(
                     children: [
-                      Container(
-                        width: 84,
-                        height: 84,
-                        decoration: BoxDecoration(
-                          color: AppColors.forestSurface,
-                          borderRadius: BorderRadius.circular(42),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 92,
+                              height: 92,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(46),
+                                border: Border.all(color: AppColors.border),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x1A17322E),
+                                    blurRadius: 24,
+                                    offset: Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: const CakuLogo(size: 52, showFrame: false),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'CAKU',
+                              style: Theme.of(context).textTheme.displayLarge
+                                  ?.copyWith(
+                                    color: AppColors.forest,
+                                    letterSpacing: 6,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Explore More, Worry Less.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
                         ),
-                        alignment: Alignment.center,
-                        child: const CakuLogo(size: 48, showFrame: false),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'CAKU',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 32,
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
                               color: AppColors.forest,
-                              letterSpacing: -0.3,
                             ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Explore More, Worry Less.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 32,
-                  child: Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        color: AppColors.forest,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

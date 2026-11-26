@@ -10,11 +10,12 @@ import '../../state/cart_controller.dart';
 import '../../widgets/app_buttons.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
+import '../../widgets/date_field.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/image_source_field.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
-import '../rental_detail_screen.dart';
+import '../shared/rental_detail_screen.dart';
 
 /// Pengajuan sewa: pilih periode, tinjau rincian, unggah bukti transfer, lalu
 /// kirim `POST /rentals` sebagai multipart.
@@ -63,6 +64,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   double _totalPerDay(List<CartLine> lines) =>
       lines.fold(0, (total, line) => total + line.subtotal);
+
+  bool get _hasMissingOriginalPrice {
+    final cart = CartScope.read(context);
+    return cart.lines.any((line) => !line.item.hasOriginalPrice);
+  }
 
   double _penaltyPerDay(List<CartLine> lines) => lines.fold(
     0,
@@ -146,13 +152,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _proofError = proofError;
       _formError = cart.isEmpty
           ? 'Keranjang kosong. Pilih perlengkapan terlebih dahulu.'
-          : null;
+          : (_hasMissingOriginalPrice
+                ? 'Harga asli salah satu barang belum diisi oleh Admin. '
+                      'Barang tersebut belum dapat disewa.'
+                : null);
     });
 
     if (startError != null ||
         endError != null ||
         proofError != null ||
-        cart.isEmpty) {
+        cart.isEmpty ||
+        _hasMissingOriginalPrice) {
       return;
     }
 
@@ -210,7 +220,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       appBar: CakuAppBar(
         title: 'Checkout',
-        subtitle: 'Info penyewa, periode, dan pembayaran',
         showBack: true,
       ),
       body: ListView(
@@ -235,6 +244,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                 ],
+                if (_hasMissingOriginalPrice) ...[
+                  InlineNotice(
+                    message:
+                        'Harga asli salah satu barang belum diisi oleh Admin. '
+                        'Barang tersebut belum dapat disewa.',
+                    icon: Icons.block_rounded,
+                    tone: NoticeTone.error,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 SummaryCard(
                   title: 'Info Penyewa & Periode',
                   children: [
@@ -243,7 +262,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       value: AuthScope.maybeOf(context)?.user?.nama ?? '-',
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    _DateField(
+                    DateField(
                       label: 'Tanggal Mulai',
                       value: _start,
                       placeholder: 'Pilih tanggal mulai',
@@ -251,8 +270,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       onTap: _pickStart,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    _DateField(
-                      label: 'Tanggal selesai',
+                    DateField(
+                      label: 'Tanggal Selesai',
                       value: _end,
                       placeholder: 'Pilih tanggal selesai',
                       error: _endError,
@@ -442,91 +461,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 icon: Icons.send_rounded,
                 expand: false,
                 loading: _submitting,
-                onPressed: _submit,
+                onPressed: (_submitting || _hasMissingOriginalPrice)
+                    ? null
+                    : _submit,
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.placeholder,
-    required this.onTap,
-    this.error,
-  });
-
-  final String label;
-  final DateTime? value;
-  final String placeholder;
-  final VoidCallback onTap;
-  final String? error;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = error == null ? AppColors.border : AppColors.error;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FieldLabel(label: label, required: true),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: borderColor),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_month_rounded,
-                  size: 20,
-                  color: value == null ? AppColors.gray : AppColors.forest,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    value == null ? placeholder : Formatters.dateLong(value!),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: value == null
-                          ? FontWeight.w400
-                          : FontWeight.w600,
-                      color: value == null
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.expand_more_rounded,
-                  size: 20,
-                  color: AppColors.gray,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (error != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            error!,
-            style: const TextStyle(color: AppColors.error, fontSize: 12),
-          ),
-        ],
-      ],
     );
   }
 }

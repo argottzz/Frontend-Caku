@@ -17,14 +17,18 @@ const _summary = ReportSummary(
   totalPendapatan: 316000,
 );
 
+Widget wrap(Widget child) => MaterialApp(
+  theme: AppTheme.light,
+  home: Scaffold(body: child),
+);
+
 void main() {
   testWidgets('laporan menampilkan ringkasan dan keadaan kosong', (
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: ReportsScreen(
+      wrap(
+        ReportsTab(
           loadReports:
               ({
                 DateTime? startDate,
@@ -38,7 +42,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Laporan Pendapatan'), findsOneWidget);
+    expect(find.text('Filter laporan'), findsOneWidget);
     expect(find.text('Ringkasan laporan'), findsOneWidget);
     expect(find.text('Rp 316.000'), findsOneWidget);
     expect(find.text('Tidak ada transaksi'), findsOneWidget);
@@ -46,9 +50,8 @@ void main() {
 
   testWidgets('laporan menampilkan galat dan tombol coba lagi', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: ReportsScreen(
+      wrap(
+        ReportsTab(
           loadReports:
               ({
                 DateTime? startDate,

@@ -7,6 +7,7 @@ import '../data/admin_application_service.dart';
 import '../data/catalog_service.dart';
 import '../data/rental_service.dart';
 import '../data/report_service.dart';
+import '../data/user_service.dart';
 import 'auth_controller.dart';
 import 'cart_controller.dart';
 
@@ -21,6 +22,7 @@ class AppServices {
     required this.rentals,
     required this.reports,
     required this.adminApplications,
+    required this.users,
   });
 
   factory AppServices.create() {
@@ -41,6 +43,7 @@ class AppServices {
       rentals: RentalService(api),
       reports: ReportService(api),
       adminApplications: AdminApplicationService(api),
+      users: UserService(api),
     );
   }
 
@@ -52,6 +55,7 @@ class AppServices {
   final RentalService rentals;
   final ReportService reports;
   final AdminApplicationService adminApplications;
+  final UserService users;
 }
 
 /// Akses dependensi non-reaktif.

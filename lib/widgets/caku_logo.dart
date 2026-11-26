@@ -20,7 +20,7 @@ class CakuLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final image = Image.asset(
-      'asset/caku-logo.jpg',
+      'asset/images/branding/caku-logo.png',
       width: size,
       height: size,
       fit: BoxFit.contain,
@@ -39,7 +39,7 @@ class CakuLogo extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.sageLight),
       ),
       child: image,
     );

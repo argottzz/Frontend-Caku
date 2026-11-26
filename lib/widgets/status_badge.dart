@@ -16,7 +16,10 @@ class StatusBadge extends StatelessWidget {
       RentalStatus.pending => (AppColors.pendingBg, AppColors.pendingText),
       RentalStatus.approved => (AppColors.approvedBg, AppColors.approvedText),
       RentalStatus.ongoing => (AppColors.ongoingBg, AppColors.ongoingText),
-      RentalStatus.completed => (AppColors.completedBg, AppColors.completedText),
+      RentalStatus.completed => (
+        AppColors.completedBg,
+        AppColors.completedText,
+      ),
       RentalStatus.rejected => (AppColors.rejectedBg, AppColors.rejectedText),
     };
 
@@ -97,6 +100,60 @@ class StockBadge extends StatelessWidget {
       foreground: available ? AppColors.forest : AppColors.error,
       background: available ? AppColors.forestSurface : AppColors.errorSurface,
       dense: true,
+    );
+  }
+}
+
+/// Badge status Permohonan Admin (`pending`/`approved`/`rejected`).
+class ApplicationStatusBadge extends StatelessWidget {
+  const ApplicationStatusBadge({
+    super.key,
+    required this.status,
+    this.dense = true,
+  });
+
+  /// Nilai mentah dari API; `null` atau tak dikenal ditampilkan apa adanya.
+  final String? status;
+  final bool dense;
+
+  static String labelFor(String? status) => switch (status) {
+    'pending' => 'Menunggu',
+    'approved' => 'Disetujui',
+    'rejected' => 'Ditolak',
+    _ => status == null || status.isEmpty ? '-' : status,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final (background, foreground, icon) = switch (status) {
+      'pending' => (
+        AppColors.pendingBg,
+        AppColors.pendingText,
+        Icons.schedule_rounded,
+      ),
+      'approved' => (
+        AppColors.approvedBg,
+        AppColors.approvedText,
+        Icons.check_circle_outline_rounded,
+      ),
+      'rejected' => (
+        AppColors.rejectedBg,
+        AppColors.rejectedText,
+        Icons.cancel_outlined,
+      ),
+      _ => (
+        AppColors.surfaceMuted,
+        AppColors.textSecondary,
+        Icons.help_outline_rounded,
+      ),
+    };
+
+    return BadgePill(
+      label: labelFor(status),
+      foreground: foreground,
+      background: background,
+      icon: icon,
+      dense: dense,
     );
   }
 }

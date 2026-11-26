@@ -24,12 +24,14 @@ class User {
     required this.nama,
     required this.email,
     required this.role,
+    this.profileImage,
   });
 
   final int id;
   final String nama;
   final String email;
   final UserRole role;
+  final String? profileImage;
 
   bool get isAdmin => role == UserRole.admin;
 
@@ -46,6 +48,7 @@ class User {
       nama: Json.asString(json['nama']),
       email: Json.asString(json['email']),
       role: UserRole.fromApi(json['role']),
+      profileImage: Json.asStringOrNull(json['profile_image']),
     );
   }
 }

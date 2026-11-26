@@ -25,7 +25,7 @@ class _CakuAppState extends State<CakuApp> {
   @override
   void initState() {
     super.initState();
-    _bootstrap = _prepare();
+    _bootstrap = _prepare(); 
   }
 
   Future<void> _prepare() async {

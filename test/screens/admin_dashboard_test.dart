@@ -56,4 +56,62 @@ void main() {
     expect(find.text('Server sedang sibuk.'), findsOneWidget);
     expect(find.text('Coba lagi'), findsOneWidget);
   });
+
+  testWidgets('tab Laporan membuka rekap tanpa memuat ringkasan lagi', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AdminDashboardScreen(
+          loadReport: () async => const ReportData(ringkasan: _summary),
+          loadReports:
+              ({
+                DateTime? startDate,
+                DateTime? endDate,
+                String? status,
+                int page = 1,
+                int limit = 10,
+              }) async => const ReportData(ringkasan: _summary),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tab laporan belum dibangun sebelum dibuka.
+    expect(find.text('Ringkasan laporan'), findsNothing);
+
+    await tester.tap(find.text('Laporan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ringkasan laporan'), findsOneWidget);
+    expect(find.text('Filter laporan'), findsOneWidget);
+    expect(find.text('Tidak ada transaksi'), findsOneWidget);
+  });
+
+  testWidgets('tab Laporan dapat dibuka langsung lewat initialTab', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AdminDashboardScreen(
+          initialTab: 1,
+          loadReport: () async => const ReportData(ringkasan: _summary),
+          loadReports:
+              ({
+                DateTime? startDate,
+                DateTime? endDate,
+                String? status,
+                int page = 1,
+                int limit = 10,
+              }) async => throw ApiException(message: 'Server sedang sibuk.'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Filter laporan'), findsOneWidget);
+    expect(find.text('Server sedang sibuk.'), findsOneWidget);
+  });
 }

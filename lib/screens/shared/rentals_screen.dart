@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../core/network/api_exception.dart';
-import '../core/theme/app_colors.dart';
-import '../core/theme/app_theme.dart';
-import '../models/rental.dart';
-import '../state/app_scope.dart';
-import '../widgets/app_snack.dart';
-import '../widgets/caku_app_bar.dart';
-import '../widgets/layout.dart';
-import '../widgets/rental_card.dart';
-import '../widgets/state_views.dart';
-import '../widgets/status_filter_bar.dart';
+import '../../core/network/api_exception.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
+import '../../models/rental.dart';
+import '../../state/app_scope.dart';
+import '../../widgets/app_snack.dart';
+import '../../widgets/caku_app_bar.dart';
+import '../../widgets/layout.dart';
+import '../../widgets/rental_card.dart';
+import '../../widgets/state_views.dart';
+import '../../widgets/status_filter_bar.dart';
+import '../customer/cart_screen.dart';
 import 'rental_detail_screen.dart';
 
 /// Daftar transaksi sewa. Customer melihat miliknya sendiri; mode admin
@@ -96,6 +97,12 @@ class _RentalsScreenState extends State<RentalsScreen> {
     _load(reset: true);
   }
 
+  void _openCart() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
+  }
+
   Future<void> _openDetail(Rental rental) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -108,11 +115,12 @@ class _RentalsScreenState extends State<RentalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: CakuAppBar(
-        title: widget.adminMode ? 'Manajemen Transaksi' : 'Sewa Saya',
-        subtitle: widget.adminMode
-            ? 'Verifikasi dan proses pesanan'
-            : 'Pantau status pengajuan Anda',
+        title: widget.adminMode ? 'Manajemen Transaksi' : 'Pesanan Saya',
+        showBack: widget.adminMode && Navigator.of(context).canPop(),
+        onCartTap: widget.adminMode ? null : _openCart,
+        cartBadge: widget.adminMode ? 0 : CartScope.of(context).totalQuantity,
       ),
       body: RefreshIndicator(
         onRefresh: () => _load(reset: true),
@@ -121,12 +129,18 @@ class _RentalsScreenState extends State<RentalsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           children: [
-            StatusFilterBar(selected: _status, onSelect: _selectStatus),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: StatusFilterBar(
+                selected: _status,
+                onSelect: _selectStatus,
+              ),
+            ),
             ResponsiveFrame(
               maxWidth: 720,
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
-                AppSpacing.md,
+                AppSpacing.lg,
                 AppSpacing.lg,
                 AppSpacing.xxl,
               ),

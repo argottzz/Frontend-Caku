@@ -8,6 +8,8 @@ import '../../state/cart_controller.dart';
 import '../../widgets/app_buttons.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
+import '../../widgets/confirm_dialog.dart';
+import '../../widgets/date_field.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/item_image.dart';
 import '../../widgets/layout.dart';
@@ -159,16 +161,28 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Future<void> _confirmRemove(CartLine line) async {
+    final cart = CartScope.read(context);
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Hapus dari keranjang?',
+      message:
+          '${line.item.nama} akan dihapus dari keranjang. Kamu bisa '
+          'menambahkannya lagi dari katalog.',
+      confirmLabel: 'Hapus',
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    cart.remove(line.item.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = CartScope.of(context);
     final isEmpty = cart.isEmpty;
 
     return Scaffold(
-      appBar: CakuAppBar(
-        title: 'Keranjang',
-        showBack: true,
-      ),
+      appBar: CakuAppBar(title: 'Keranjang', showBack: true),
       body: isEmpty
           ? EmptyView(
               icon: Icons.shopping_bag_outlined,
@@ -216,7 +230,7 @@ class _CartScreenState extends State<CartScreen> {
                             }
                           },
                           onDecrement: () => cart.decrement(line.item.id),
-                          onRemove: () => cart.remove(line.item.id),
+                          onRemove: () => _confirmRemove(line),
                         ),
                         const SizedBox(height: AppSpacing.md),
                       ],
@@ -228,7 +242,8 @@ class _CartScreenState extends State<CartScreen> {
                       if (_hasStockIssue) ...[
                         const SizedBox(height: AppSpacing.md),
                         const InlineNotice(
-                          message: 'Jumlah melebihi stok tersedia. Kurangi jumlah.',
+                          message:
+                              'Jumlah melebihi stok tersedia. Kurangi jumlah.',
                           tone: NoticeTone.error,
                         ),
                       ],
@@ -339,9 +354,10 @@ class _RentalDateCard extends StatelessWidget {
       title: 'Periode Sewa',
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _DateField(
+              child: DateField(
                 label: 'Tanggal Mulai',
                 value: start,
                 placeholder: 'Pilih tanggal',
@@ -351,7 +367,7 @@ class _RentalDateCard extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: _DateField(
+              child: DateField(
                 label: 'Tanggal Selesai',
                 value: end,
                 placeholder: 'Pilih tanggal',
@@ -442,9 +458,9 @@ class _CartLineCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 15,
-                            height: 1.25,
-                          ),
+                        fontSize: 15,
+                        height: 1.25,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
@@ -461,6 +477,17 @@ class _CartLineCard extends StatelessWidget {
                         'Stok tidak mencukupi',
                         style: const TextStyle(
                           color: AppColors.error,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    if (item.originalPrice == null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Harga asli belum diisi. Barang belum dapat disewa.',
+                        style: const TextStyle(
+                          color: AppColors.warning,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -517,81 +544,6 @@ class _CartLineCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.placeholder,
-    required this.onTap,
-    this.error,
-  });
-
-  final String label;
-  final DateTime? value;
-  final String placeholder;
-  final VoidCallback onTap;
-  final String? error;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = error == null ? AppColors.border : AppColors.error;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FieldLabel(label: label, required: true),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: borderColor),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_month_rounded,
-                  size: 20,
-                  color: value == null ? AppColors.gray : AppColors.forest,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    value == null ? placeholder : Formatters.dateLong(value!),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: value == null
-                          ? FontWeight.w400
-                          : FontWeight.w600,
-                      color: value == null
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (error != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            error!,
-            style: const TextStyle(color: AppColors.error, fontSize: 12),
-          ),
-        ],
-      ],
     );
   }
 }

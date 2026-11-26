@@ -43,35 +43,7 @@ class BrandBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(color: AppColors.background),
-      child: Stack(
-        children: [
-          Positioned(
-            top: -90,
-            right: -70,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: const BoxDecoration(
-                color: AppColors.cream,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -120,
-            left: -80,
-            child: Container(
-              width: 260,
-              height: 260,
-              decoration: const BoxDecoration(
-                color: AppColors.forestSurface,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          child,
-        ],
-      ),
+      child: child,
     );
   }
 }
@@ -83,6 +55,7 @@ class SectionHeader extends StatelessWidget {
     this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.dense = false,
   });
 
   final String title;
@@ -90,8 +63,19 @@ class SectionHeader extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
+  /// Versi ringkas: judul 15px tanpa jarak bawah tambahan, untuk blok dalam
+  /// kartu atau daftar padat.
+  final bool dense;
+
   @override
   Widget build(BuildContext context) {
+    final titleStyle = dense
+        ? Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          )
+        : Theme.of(context).textTheme.titleLarge;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -99,7 +83,7 @@ class SectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              Text(title, style: titleStyle),
               if (subtitle != null) ...[
                 const SizedBox(height: AppSpacing.xs),
                 Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),

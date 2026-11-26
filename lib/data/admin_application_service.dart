@@ -24,7 +24,11 @@ class AdminApplicationService {
     await _client.post('/admin-applications');
   }
 
-  Future<List<Map<String, dynamic>>> list({String? status, int page = 1, int limit = 20}) async {
+  Future<List<Map<String, dynamic>>> list({
+    String? status,
+    int page = 1,
+    int limit = 20,
+  }) async {
     final response = await _client.get(
       '/admin-applications',
       query: {'status': status, 'page': '$page', 'limit': '$limit'},

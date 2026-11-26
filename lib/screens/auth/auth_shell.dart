@@ -6,7 +6,8 @@ import '../../widgets/caku_logo.dart';
 import '../../widgets/layout.dart';
 
 /// Kerangka layar autentikasi: panel merek di layar lebar, header ringkas
-/// di ponsel.
+/// di ponsel. Judul dan keterangan berada di luar kartu, sedangkan seluruh
+/// isian form berada di dalam satu kartu agar fokus pengguna jelas.
 class AuthShell extends StatelessWidget {
   const AuthShell({
     super.key,
@@ -14,12 +15,17 @@ class AuthShell extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.footer,
+    this.onBack,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final Widget? footer;
+
+  /// Tombol kembali di atas form. `null` berarti halaman ini bukan halaman
+  /// yang dibuka dari halaman lain, jadi tidak ada tombol yang tidak berefek.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +47,7 @@ class AuthShell extends StatelessWidget {
                       subtitle: subtitle,
                       footer: footer,
                       maxWidth: 480,
+                      onBack: onBack,
                       child: child,
                     ),
                   ),
@@ -50,25 +57,19 @@ class AuthShell extends StatelessWidget {
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
+                AppSpacing.screen,
                 AppSpacing.xl,
-                AppSpacing.lg,
+                AppSpacing.screen,
                 AppSpacing.xxl,
               ),
               child: ResponsiveFrame(
                 padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _MobileBrandHeader(),
-                    const SizedBox(height: AppSpacing.xl),
-                    _FormCard(
-                      title: title,
-                      subtitle: subtitle,
-                      footer: footer,
-                      child: child,
-                    ),
-                  ],
+                child: _FormContent(
+                  title: title,
+                  subtitle: subtitle,
+                  footer: footer,
+                  onBack: onBack,
+                  child: child,
                 ),
               ),
             );
@@ -79,83 +80,71 @@ class AuthShell extends StatelessWidget {
   }
 }
 
+/// Panel merek di layar lebar: foto hutan, logo, dan poin keunggulan.
 class _BrandPanel extends StatelessWidget {
   const _BrandPanel();
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppColors.forest,
-      child: Stack(
-        children: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: _Glow(size: 260, opacity: 0.10),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -70,
-            child: _Glow(size: 300, opacity: 0.08),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.xxl + AppSpacing.sm),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const CakuLogo(size: 108, showFrame: true),
-                const Spacer(),
-                Text(
-                  'Perlengkapan camping\nsiap menemani\npetualanganmu.',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: AppColors.textOnDark,
-                    height: 1.25,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                const _BrandPoint(
-                  icon: Icons.inventory_2_outlined,
-                  text: 'Katalog alat camping dengan stok yang jelas',
-                ),
-                const _BrandPoint(
-                  icon: Icons.event_available_outlined,
-                  text: 'Pengajuan sewa dengan tanggal yang fleksibel',
-                ),
-                const _BrandPoint(
-                  icon: Icons.receipt_long_outlined,
-                  text: 'Riwayat transaksi dan rincian biaya transparan',
-                ),
-                const Spacer(),
-                Text(
-                  'CAKU • Penyewaan perlengkapan camping',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.cream.withValues(alpha: 0.75),
-                  ),
-                ),
-              ],
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'asset/images/branding/forest-header.jpg',
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (context, error, stack) =>
+              const ColoredBox(color: AppColors.forest),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xB310241F), Color(0xF210241F)],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Glow extends StatelessWidget {
-  const _Glow({required this.size, required this.opacity});
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.cream.withValues(alpha: opacity),
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl + AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CakuLogo(size: 108, showFrame: true),
+              const Spacer(),
+              Text(
+                'Perlengkapan camping\nsiap menemani\npetualanganmu.',
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: AppColors.white,
+                  fontSize: 28,
+                  height: 1.25,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              const _BrandPoint(
+                icon: Icons.inventory_2_outlined,
+                text: 'Katalog alat camping dengan stok yang jelas',
+              ),
+              const _BrandPoint(
+                icon: Icons.event_available_outlined,
+                text: 'Pengajuan sewa dengan tanggal yang fleksibel',
+              ),
+              const _BrandPoint(
+                icon: Icons.receipt_long_outlined,
+                text: 'Riwayat transaksi dan rincian biaya transparan',
+              ),
+              const Spacer(),
+              Text(
+                'CAKU • Penyewaan perlengkapan camping',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.sageLight),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -177,49 +166,22 @@ class _BrandPoint extends StatelessWidget {
             width: 26,
             height: 26,
             decoration: BoxDecoration(
-              color: AppColors.cream.withValues(alpha: 0.16),
+              color: AppColors.sage.withValues(alpha: 0.28),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: Icon(icon, size: 15, color: AppColors.cream),
+            child: Icon(icon, size: 15, color: AppColors.sageLight),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.cream.withValues(alpha: 0.92),
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.sageLight),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _MobileBrandHeader extends StatelessWidget {
-  const _MobileBrandHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const CakuLogo(size: 84, showFrame: true),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          'CAKU',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: AppColors.forest,
-            letterSpacing: 4,
-            fontSize: 26,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          'Penyewaan perlengkapan camping',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
     );
   }
 }
@@ -231,6 +193,7 @@ class _FormArea extends StatelessWidget {
     required this.child,
     this.footer,
     this.maxWidth = 480,
+    this.onBack,
   });
 
   final String title;
@@ -238,6 +201,7 @@ class _FormArea extends StatelessWidget {
   final Widget child;
   final Widget? footer;
   final double maxWidth;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -249,15 +213,12 @@ class _FormArea extends StatelessWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _FormCard(title: title, subtitle: subtitle, child: child),
-              if (footer != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                footer!,
-              ],
-            ],
+          child: _FormContent(
+            title: title,
+            subtitle: subtitle,
+            footer: footer,
+            onBack: onBack,
+            child: child,
           ),
         ),
       ),
@@ -265,49 +226,65 @@ class _FormArea extends StatelessWidget {
   }
 }
 
-class _FormCard extends StatelessWidget {
-  const _FormCard({
+/// Logo, judul dan sub-judul di tengah, lalu form di dalam kartu dan tautan
+/// pindah halaman di bawahnya (di luar kartu).
+class _FormContent extends StatelessWidget {
+  const _FormContent({
     required this.title,
     required this.subtitle,
     required this.child,
     this.footer,
+    this.onBack,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final Widget? footer;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.nearBlack.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (onBack != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onBack,
+              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Kembali'),
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.xs),
-          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: AppSpacing.xl),
-          child,
-          if (footer != null) ...[
-            const SizedBox(height: AppSpacing.lg),
-            footer!,
-          ],
-        ],
-      ),
+        const Center(child: CakuLogo(size: 64, showFrame: true)),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displayLarge,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: child,
+        ),
+        if (footer != null) ...[const SizedBox(height: AppSpacing.lg), footer!],
+      ],
     );
   }
 }
