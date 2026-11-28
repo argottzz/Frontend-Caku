@@ -19,4 +19,14 @@ class UserService {
     final response = await _client.delete('/users/me/profile-image');
     return User.fromJson(response.dataMap);
   }
+
+  Future<User> updateProfile({String? nama, String? phoneNumber}) async {
+    final body = <String, dynamic>{};
+    if (nama != null && nama.trim().isNotEmpty) body['nama'] = nama.trim();
+    if (phoneNumber != null && phoneNumber.trim().isNotEmpty) {
+      body['phone_number'] = phoneNumber.trim();
+    }
+    final response = await _client.patch('/users/me', body: body);
+    return User.fromJson(response.dataMap);
+  }
 }

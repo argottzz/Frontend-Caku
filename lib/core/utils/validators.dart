@@ -41,6 +41,15 @@ abstract final class Validators {
     return null;
   }
 
+  static String? phone(String? value) {
+    final empty = required(value, label: 'Nomor telepon');
+    if (empty != null) return empty;
+    if (!RegExp(r'^\+?[0-9]{8,15}$').hasMatch(value!.trim())) {
+      return 'Format nomor telepon tidak valid (8-15 digit).';
+    }
+    return null;
+  }
+
   static String? stock(String? value) {
     final empty = required(value, label: 'Stok');
     if (empty != null) return empty;

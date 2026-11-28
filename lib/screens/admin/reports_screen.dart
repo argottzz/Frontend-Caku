@@ -1,4 +1,10 @@
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import '../../core/utils/pdf_saver_mobile.dart'
+    if (dart.library.html) '../../core/utils/pdf_saver_web.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -10,16 +16,16 @@ import '../../state/app_scope.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/layout.dart';
-import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
+import '../../widgets/status_badge.dart';
 import '../../widgets/status_filter_bar.dart';
 import '../shared/rental_detail_screen.dart';
 
 /// Isi tab Laporan pada [AdminDashboardScreen].
 ///
-/// Dulu halaman Laporan Pendapatan tersendiri; sekarang header dan pemilih
-/// tab disediakan dashboard, sedangkan filter, ringkasan, dan daftar
-/// transaksi tetap ditangani di sini.
+/// Urutannya: filter status, filter tanggal, ringkasan hasil filter, lalu
+/// daftar transaksi yang dipadatkan agar lebih banyak baris terlihat dalam
+/// satu layar.
 class ReportsTab extends StatefulWidget {
   const ReportsTab({super.key, this.loadReports});
 
@@ -52,8 +58,9 @@ class _ReportsTabState extends State<ReportsTab> {
   DateTime? _end;
   RentalStatus? _status;
 
-  bool get _hasActiveFilter =>
-      _start != null || _end != null || _status != null;
+  bool get _hasDateFilter => _start != null || _end != null;
+
+  bool get _hasActiveFilter => _hasDateFilter || _status != null;
 
   @override
   void initState() {
@@ -181,6 +188,15 @@ class _ReportsTabState extends State<ReportsTab> {
     _load(reset: true);
   }
 
+  /// Menghapus hanya filter tanggal; filter status tetap seperti yang dipilih.
+  void _resetDates() {
+    setState(() {
+      _start = null;
+      _end = null;
+    });
+    _load(reset: true);
+  }
+
   void _resetFilters() {
     setState(() {
       _start = null;
@@ -199,13 +215,106 @@ class _ReportsTabState extends State<ReportsTab> {
     if (mounted) await _load(reset: true);
   }
 
+  Future<void> _export() async {
+    final data = _data;
+    if (data == null) {
+      AppSnack.info(context, 'Muat laporan terlebih dahulu.');
+      return;
+    }
+    try {
+      final summary = data.ringkasan;
+      final rentals = _rentals;
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => [
+            pw.Text(
+              'Laporan Transaksi CAKU',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Filter: ${_status?.label ?? 'Semua'}'
+              '${_start != null ? ' | Dari: ${Formatters.date(_start!)}' : ''}'
+              '${_end != null ? ' | Sampai: ${Formatters.date(_end!)}' : ''}',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 12),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'No',
+                'Tanggal Sewa',
+                'Jumlah Barang',
+                'Total Bayar',
+                'Status',
+              ],
+              data: rentals
+                  .map(
+                    (r) => [
+                      '#${r.id}',
+                      '${Formatters.date(r.tanggalMulai)} - ${Formatters.date(r.tanggalSelesai)}',
+                      '${r.jumlahItem}',
+                      Formatters.rupiah(r.totalBayar),
+                      r.status.label,
+                    ],
+                  )
+                  .toList(growable: false),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              cellStyle: const pw.TextStyle(fontSize: 9),
+            ),
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'Ringkasan: ${summary.totalTransaksi} transaksi, '
+              'Total sewa ${Formatters.rupiah(summary.totalSewa)}, '
+              'Total denda ${Formatters.rupiah(summary.totalDenda)}, '
+              'Total pendapatan ${Formatters.rupiah(summary.totalPendapatan)}.',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+      final bytes = await pdf.save();
+      final fileName = 'laporan_caku_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final resultPath = await savePdfFile(bytes, fileName);
+      if (!mounted) return;
+      AppSnack.success(context, 'PDF berhasil disimpan: $resultPath');
+    } catch (error) {
+      debugPrint('Ekspor PDF error: $error');
+      if (mounted) {
+        AppSnack.error(context, 'Gagal membuat PDF laporan.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final summary = _data?.ringkasan ?? ReportSummary.empty;
+    final total = _data?.pagination?.total ?? _rentals.length;
 
-    return RefreshIndicator(
+    return CustomRefreshIndicator(
       onRefresh: () => _load(reset: true),
-      color: AppColors.forest,
+      builder: (context, child, controller) => Stack(
+        children: [
+          child,
+          Positioned(
+            top: controller.value * 60,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: AppColors.forest,
+                  value: controller.isLoading ? null : controller.value.clamp(0.0, 1.0),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
@@ -215,7 +324,7 @@ class _ReportsTabState extends State<ReportsTab> {
             maxWidth: 960,
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
-              AppSpacing.md,
+              AppSpacing.sm,
               AppSpacing.lg,
               AppSpacing.xxl,
             ),
@@ -229,7 +338,7 @@ class _ReportsTabState extends State<ReportsTab> {
                   onPickEnd: _pickEnd,
                   onClearStart: _start == null ? null : _clearStart,
                   onClearEnd: _end == null ? null : _clearEnd,
-                  onReset: _hasActiveFilter ? _resetFilters : null,
+                  onReset: _hasDateFilter ? _resetDates : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 if (_loading && _data == null)
@@ -237,43 +346,13 @@ class _ReportsTabState extends State<ReportsTab> {
                 else if (_error != null && _data == null)
                   ErrorView(message: _error!, onRetry: () => _load(reset: true))
                 else ...[
-                  SummaryCard(
-                    title: 'Ringkasan laporan',
-                    children: [
-                      InfoRow(
-                        label: 'Jumlah transaksi',
-                        value: '${summary.totalTransaksi}',
-                      ),
-                      InfoRow(
-                        label: 'Total sewa',
-                        value: Formatters.rupiah(summary.totalSewa),
-                      ),
-                      InfoRow(
-                        label: 'Total denda',
-                        value: Formatters.rupiah(summary.totalDenda),
-                      ),
-                      const Divider(height: AppSpacing.lg),
-                      InfoRow(
-                        label: 'Total pendapatan',
-                        value: Formatters.rupiah(summary.totalPendapatan),
-                        emphasize: true,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        'Filter berdasarkan tanggal mulai sewa. Status '
-                        'filter memengaruhi ringkasan dan daftar transaksi.',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
+                  _ReportSummaryCard(summary: summary, onExport: _export),
                   const SizedBox(height: AppSpacing.lg),
                   SectionHeader(
                     title: 'Hasil laporan',
                     subtitle: _rentals.isEmpty
                         ? 'Tidak ada transaksi pada filter ini'
-                        : '${_rentals.length} dari '
-                              '${_data?.pagination?.total ?? _rentals.length} '
-                              'transaksi',
+                        : '${_rentals.length} dari $total transaksi',
                   ),
                   const SizedBox(height: AppSpacing.md),
                   if (_rentals.isEmpty)
@@ -292,13 +371,12 @@ class _ReportsTabState extends State<ReportsTab> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         for (final rental in _rentals) ...[
-                          RentalCard(
+                          _ReportRentalCard(
                             key: ValueKey(rental.id),
                             rental: rental,
-                            showCustomer: true,
                             onTap: () => _openDetail(rental),
                           ),
-                          const SizedBox(height: AppSpacing.md),
+                          const SizedBox(height: AppSpacing.sm),
                         ],
                         if (_hasNext)
                           TextButton.icon(
@@ -342,6 +420,7 @@ class _ReportsTabState extends State<ReportsTab> {
   }
 }
 
+/// Kartu filter tanggal. Tombol Reset hanya tampil saat tanggal dipilih.
 class _FilterCard extends StatelessWidget {
   const _FilterCard({
     required this.start,
@@ -363,37 +442,74 @@ class _FilterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chips = [
+      _DateChip(
+        label: 'Dari',
+        value: start,
+        onTap: onPickStart,
+        onClear: onClearStart,
+      ),
+      _DateChip(
+        label: 'Sampai',
+        value: end,
+        onTap: onPickEnd,
+        onClear: onClearEnd,
+      ),
+    ];
+
     return SummaryCard(
-      title: 'Filter laporan',
+      padding: const EdgeInsets.all(AppSpacing.card),
       children: [
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+        Row(
           children: [
-            _DateChip(
-              label: 'Dari',
-              value: start,
-              onTap: onPickStart,
-              onClear: onClearStart,
-            ),
-            _DateChip(
-              label: 'Sampai',
-              value: end,
-              onTap: onPickEnd,
-              onClear: onClearEnd,
+            Expanded(
+              child: Text(
+                'Filter laporan',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             if (onReset != null)
-              TextButton.icon(
+              TextButton(
                 onPressed: onReset,
-                icon: const Icon(Icons.close_rounded, size: 16),
-                label: const Text('Reset'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                ),
+                child: const Text('Reset'),
               ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 380) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  chips[0],
+                  const SizedBox(height: AppSpacing.sm),
+                  chips[1],
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: chips[0]),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: chips[1]),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Text(
-          'Filter berdasarkan tanggal mulai sewa. Tanggal sampai dapat '
-          'dikosongkan untuk melihat data sampai terbaru.',
+          'Filter berdasarkan tanggal mulai sewa. Kosongkan tanggal sampai '
+          'untuk melihat data hingga terbaru.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -416,55 +532,241 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: value == null ? AppColors.border : AppColors.forest,
+    final selected = value != null;
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 2,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: selected ? AppColors.forest : AppColors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_month_rounded,
+                size: 16,
+                color: selected ? AppColors.forest : AppColors.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.xs + 2),
+              Expanded(
+                child: Text(
+                  selected
+                      ? '$label: ${Formatters.date(value!)}'
+                      : '$label tanggal',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (onClear != null)
+                InkWell(
+                  onTap: onClear,
+                  customBorder: const CircleBorder(),
+                  child: const Padding(
+                    padding: EdgeInsets.only(left: AppSpacing.xs),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 15,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.calendar_month_rounded,
-              size: 16,
-              color: value == null ? AppColors.textSecondary : AppColors.forest,
-            ),
-            const SizedBox(width: AppSpacing.xs + 2),
-            Text(
-              value == null
-                  ? '$label tanggal'
-                  : '$label: ${Formatters.date(value!)}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: value == null
-                    ? AppColors.textSecondary
-                    : AppColors.textPrimary,
+      ),
+    );
+  }
+}
+
+/// Kartu hasil kalkulasi filter: berlatar hijau lembut agar berbeda dari
+/// kartu input di atasnya.
+class _ReportSummaryCard extends StatelessWidget {
+  const _ReportSummaryCard({required this.summary, required this.onExport});
+
+  final ReportSummary summary;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.forestSurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.sage),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Ringkasan laporan',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
-            if (onClear != null) ...[
-              const SizedBox(width: AppSpacing.xs),
-              InkWell(
-                onTap: onClear,
-                customBorder: const CircleBorder(),
-                child: const Icon(
-                  Icons.close_rounded,
-                  size: 16,
-                  color: AppColors.textSecondary,
+              const SizedBox(width: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: onExport,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.forest,
+                  visualDensity: VisualDensity.compact,
+                  side: const BorderSide(color: AppColors.moss),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                ),
+                icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                label: const Text(
+                  'Ekspor PDF',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
             ],
-          ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          InfoRow(
+            label: 'Jumlah transaksi',
+            value: '${summary.totalTransaksi}',
+          ),
+          InfoRow(
+            label: 'Total sewa',
+            value: Formatters.rupiah(summary.totalSewa),
+          ),
+          InfoRow(
+            label: 'Total denda',
+            value: Formatters.rupiah(summary.totalDenda),
+          ),
+          const Divider(height: AppSpacing.lg),
+          InfoRow(
+            label: 'Total pendapatan',
+            value: Formatters.rupiah(summary.totalPendapatan),
+            emphasize: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu transaksi ringkas untuk daftar hasil filter: nomor & status, tanggal
+/// sewa & jumlah barang, lalu total bayar. Identitas penyewa hanya tampil di
+/// halaman detail.
+class _ReportRentalCard extends StatelessWidget {
+  const _ReportRentalCard({
+    super.key,
+    required this.rental,
+    required this.onTap,
+  });
+
+  final Rental rental;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.card),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Pesanan #${rental.id}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  StatusBadge(status: rental.status, dense: true),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.event_rounded,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      '${Formatters.date(rental.tanggalMulai)} – '
+                      '${Formatters.date(rental.tanggalSelesai)} • '
+                      '${rental.jumlahItem} jenis barang',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const Divider(height: 1),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Total bayar: ${Formatters.rupiah(rental.totalBayar)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.forest,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

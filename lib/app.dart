@@ -25,7 +25,7 @@ class _CakuAppState extends State<CakuApp> {
   @override
   void initState() {
     super.initState();
-    _bootstrap = _prepare(); 
+    _bootstrap = _prepare();
   }
 
   Future<void> _prepare() async {
@@ -82,15 +82,26 @@ class RootGate extends StatefulWidget {
 class _RootGateState extends State<RootGate> {
   AuthStatus? _lastStatus;
   Future<bool>? _onboardingFuture;
+  AuthController? _auth;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _onboardingFuture ??= AppScope.read(context).storage.readOnboardingSeen();
     final auth = AuthScope.of(context);
+    if (_auth != auth) {
+      _auth?.removeListener(_onAuthChanged);
+      _auth = auth;
+      _auth?.addListener(_onAuthChanged);
+    }
     if (_lastStatus != auth.status) {
       final previous = _lastStatus;
       _lastStatus = auth.status;
+      // Saat sesi berakhir (logout), baca ulang flag onboarding agar layar
+      // onboarding tampil kembali, bukan langsung ke login.
+      if (previous == AuthStatus.authenticated &&
+          auth.status == AuthStatus.unauthenticated) {
+        _onboardingFuture = null;
+      }
       if (previous != null) {
         // Tutup rute yang terbuka saat sesi berubah (mis. form register
         // setelah berhasil, atau halaman detail saat sesi berakhir).
@@ -103,6 +114,17 @@ class _RootGateState extends State<RootGate> {
         });
       }
     }
+    _onboardingFuture ??= AppScope.read(context).storage.readOnboardingSeen();
+  }
+
+  void _onAuthChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _auth?.removeListener(_onAuthChanged);
+    super.dispose();
   }
 
   @override

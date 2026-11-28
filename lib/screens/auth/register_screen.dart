@@ -21,9 +21,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   final _emailFocus = FocusNode();
+  final _phoneFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmFocus = FocusNode();
 
@@ -36,9 +38,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _namaController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     _emailFocus.dispose();
+    _phoneFocus.dispose();
     _passwordFocus.dispose();
     _confirmFocus.dispose();
     super.dispose();
@@ -57,6 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await AuthScope.read(context).register(
         nama: _namaController.text,
         email: _emailController.text,
+        phoneNumber: _phoneController.text,
         password: _passwordController.text,
       );
       if (!mounted) return;
@@ -179,6 +184,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 validator: (value) =>
                     Validators.email(value) ?? _serverError('email'),
                 onChanged: (_) => _clearFieldError('email'),
+                onFieldSubmitted: (_) => _phoneFocus.requestFocus(),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const FieldLabel(label: 'Nomor telepon', required: true),
+              TextFormField(
+                controller: _phoneController,
+                focusNode: _phoneFocus,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                enabled: !_loading,
+                decoration: const InputDecoration(
+                  hintText: '+628123456789',
+                  prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                ),
+                validator: (value) =>
+                    Validators.phone(value) ?? _serverError('phone_number'),
+                onChanged: (_) => _clearFieldError('phone_number'),
                 onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
               ),
               const SizedBox(height: AppSpacing.lg),

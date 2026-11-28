@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
@@ -252,11 +253,15 @@ class ListSkeleton extends StatelessWidget {
         count,
         (index) => Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: Container(
-            height: itemHeight,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Shimmer.fromColors(
+            baseColor: AppColors.surfaceMuted,
+            highlightColor: AppColors.surface,
+            child: Container(
+              height: itemHeight,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
             ),
           ),
         ),

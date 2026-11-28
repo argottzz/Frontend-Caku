@@ -39,7 +39,9 @@ class RentalService {
     required DateTime tanggalMulai,
     required DateTime tanggalSelesai,
     required List<({int idItem, int jumlah})> items,
-    required FileUpload buktiTransfer,
+    FileUpload? buktiTransfer,
+    required FileUpload identityImage,
+    String metodePembayaran = 'transfer',
   }) async {
     final fields = {
       'tanggal_mulai': _ymd(tanggalMulai),
@@ -49,11 +51,25 @@ class RentalService {
             .map((line) => {'id_items': line.idItem, 'jumlah': line.jumlah})
             .toList(growable: false),
       ),
+      'metode_pembayaran': metodePembayaran,
     };
+    final files = <String, FileUpload>{'identity_image': identityImage};
+    if (buktiTransfer != null) {
+      files['bukti_transfer'] = buktiTransfer;
+    }
     final response = await _client.postMultipart(
       '/rentals',
       fields: fields,
-      files: {'bukti_transfer': buktiTransfer},
+      files: files,
+    );
+    return Rental.fromJson(response.dataMap);
+  }
+
+  /// Konfirmasi pembayaran QR: kirim payload QR ke backend.
+  Future<Rental> payWithQr(String qrCodePayload) async {
+    final response = await _client.post(
+      '/rentals/pay-qr',
+      body: {'qr_code_payload': qrCodePayload},
     );
     return Rental.fromJson(response.dataMap);
   }

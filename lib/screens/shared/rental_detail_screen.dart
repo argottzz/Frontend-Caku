@@ -16,6 +16,7 @@ import '../../widgets/layout.dart';
 import '../../widgets/return_rental_dialog.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_badge.dart';
+import '../customer/payment_qr_screen.dart';
 
 /// Detail satu transaksi sewa. Customer dapat membatalkan pengajuan pending;
 /// admin dapat memproses status dan pengembalian.
@@ -263,10 +264,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
   Widget build(BuildContext context) {
     final isAdmin = AuthScope.of(context).isAdmin;
     return Scaffold(
-      appBar: CakuAppBar(
-        title: 'Detail Transaksi',
-        showBack: true,
-      ),
+      appBar: CakuAppBar(title: 'Detail Transaksi', showBack: true),
       body: _buildBody(isAdmin),
       bottomNavigationBar: _rental == null
           ? null
@@ -344,9 +342,36 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                       const Divider(height: AppSpacing.xl),
                       InfoRow(label: 'Penyewa', value: rental.namaUser),
                       InfoRow(label: 'Email', value: rental.emailUser),
+                      if (rental.metodePembayaran == 'qr_code') ...[
+                        InfoRow(
+                          label: 'Metode bayar',
+                          value: rental.paidAt != null
+                              ? 'QR Code (Lunas)'
+                              : 'QR Code',
+                        ),
+                        if (rental.paidAt != null)
+                          InfoRow(
+                            label: 'Dibayar',
+                            value: Formatters.dateTime(rental.paidAt!),
+                          ),
+                      ],
                     ],
                   ],
                 ),
+                if (!isAdmin &&
+                    rental.status == RentalStatus.awaitingPayment &&
+                    rental.qrCodePayload != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  PrimaryButton(
+                    label: 'Bayar Sekarang (Lihat QR)',
+                    icon: Icons.qr_code_rounded,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PaymentQrScreen(rental: rental),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 SummaryCard(
                   title: 'Barang yang disewa',
@@ -446,6 +471,20 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                   title: 'Rincian biaya',
                   children: [
                     InfoRow(
+                      label: 'Metode pembayaran',
+                      value: rental.metodePembayaran == 'qr_code'
+                          ? (rental.paidAt != null
+                                ? 'QR Code (Lunas)'
+                                : 'QR Code')
+                          : 'Transfer Bank',
+                    ),
+                    if (rental.paidAt != null)
+                      InfoRow(
+                        label: 'Status bayar',
+                        value: 'Lunas via QR',
+                        valueColor: AppColors.success,
+                      ),
+                    InfoRow(
                       label: 'Total sewa',
                       value: Formatters.rupiah(rental.totalSewa),
                     ),
@@ -505,7 +544,8 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                     ],
                   ),
                 ],
-                if (rental.buktiTransferUrl.isNotEmpty) ...[
+                if (rental.metodePembayaran != 'qr_code' &&
+                    rental.buktiTransferUrl.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.md),
                   SummaryCard(
                     title: 'Bukti transfer',
@@ -516,12 +556,47 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         child: ItemImage(
                           imageUrl: rental.buktiTransferUrl,
                           height: 180,
-                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'Ketuk gambar untuk memperbesar.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
+                if (rental.identityImageUrl.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SummaryCard(
+                    title: 'Foto jaminan KTP',
+                    children: [
+                      InkWell(
+                        onTap: () => _openProof(rental.identityImageUrl),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: ItemImage(
+                          imageUrl: rental.identityImageUrl,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Ketuk gambar untuk memperbesar.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SummaryCard(
+                    title: 'Foto jaminan KTP',
+                    children: [
+                      Text(
+                        'Foto jaminan tidak tersedia (transaksi lama).',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -571,6 +646,14 @@ class _StatusGuidance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (tone, icon, title, message) = switch (rental.status) {
+      RentalStatus.awaitingPayment => (
+        NoticeTone.info,
+        Icons.qr_code_rounded,
+        'Menunggu pembayaran',
+        isAdmin
+            ? 'Pesanan menunggu pembayaran QR dari customer.'
+            : 'Selesaikan pembayaran dengan memindai QR Code.',
+      ),
       RentalStatus.pending => (
         NoticeTone.warning,
         Icons.hourglass_top_rounded,
@@ -687,6 +770,7 @@ class _ActionBar extends StatelessWidget {
           break;
         case RentalStatus.completed:
         case RentalStatus.rejected:
+        case RentalStatus.awaitingPayment:
           return const SizedBox.shrink();
       }
     } else if (rental.canCancel) {

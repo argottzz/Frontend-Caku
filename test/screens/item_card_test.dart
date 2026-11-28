@@ -32,6 +32,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Tenda Dome 4P'), findsOneWidget);
     expect(find.text('Rp 50.000/hari'), findsOneWidget);
@@ -53,6 +54,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Stok habis'), findsOneWidget);
   });

@@ -362,8 +362,9 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                           return 'Format nominal tidak valid.';
                         }
                         final parsed = double.tryParse(text);
-                        if (parsed == null)
+                        if (parsed == null) {
                           return 'Format nominal tidak valid.';
+                        }
                         if (parsed < 0) return 'Nominal tidak boleh negatif.';
                         return null;
                       },

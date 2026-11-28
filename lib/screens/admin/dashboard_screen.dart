@@ -1,4 +1,6 @@
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -8,15 +10,15 @@ import '../../models/report.dart';
 import '../../models/rental.dart';
 import '../../state/app_scope.dart';
 import '../../widgets/caku_app_bar.dart';
-import '../../widgets/form_widgets.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/rental_card.dart';
 import '../../widgets/state_views.dart';
 
 import '../shared/admin_applications_screen.dart';
-import 'item_form_screen.dart' show ItemFormScreen;
 import '../shared/rental_detail_screen.dart';
 import '../shared/rentals_screen.dart';
+import 'item_form_screen.dart' show ItemFormScreen;
+import 'items_screen.dart';
 import 'reports_screen.dart';
 
 /// Dashboard admin: dua tab dalam satu halaman.
@@ -187,20 +189,33 @@ class _TabButton extends StatelessWidget {
                 color: selected ? AppColors.moss : AppColors.border,
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 17, color: foreground),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: foreground,
-                  ),
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Di layar sangat sempit ikon dilepas agar label tab tetap
+                // terbaca utuh tanpa terpotong elipsis.
+                final showIcon = constraints.maxWidth >= 150;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (showIcon) ...[
+                      Icon(icon, size: 17, color: foreground),
+                      const SizedBox(width: AppSpacing.xs + 2),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: foreground,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -232,6 +247,7 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
   bool _loading = true;
   String? _error;
   int _totalItems = 0;
+  int _pendingApplications = 0;
 
   @override
   void initState() {
@@ -260,16 +276,23 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
                       ReportData(ringkasan: ReportSummary.empty),
                     )));
       int totalItems = 0;
+      int pendingApplications = 0;
       if (services != null) {
+        // Statistik pendukung; kegagalannya tidak boleh menggagalkan
+        // ringkasan utama yang sudah berhasil dimuat.
         try {
           final page = await services.catalog.items(limit: 1);
           totalItems = page.pagination?.total ?? page.items.length;
+        } catch (_) {}
+        try {
+          pendingApplications = await services.adminApplications.pendingCount();
         } catch (_) {}
       }
       if (!mounted) return;
       setState(() {
         _data = data;
         _totalItems = totalItems;
+        _pendingApplications = pendingApplications;
         _loading = false;
       });
     } on ApiException catch (error) {
@@ -297,6 +320,13 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
     if (mounted) await _load();
   }
 
+  Future<void> _openItems() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const ItemsScreen()));
+    if (mounted) await _load();
+  }
+
   Future<void> _openDetail(Rental rental) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -319,9 +349,29 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
     final summary = _data?.ringkasan ?? ReportSummary.empty;
     final rentals = _data?.rentals ?? const <Rental>[];
 
-    return RefreshIndicator(
+    return CustomRefreshIndicator(
       onRefresh: _load,
-      color: AppColors.forest,
+      builder: (context, child, controller) => Stack(
+        children: [
+          child,
+          Positioned(
+            top: controller.value * 60,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: AppColors.forest,
+                  value: controller.isLoading ? null : controller.value.clamp(0.0, 1.0),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(top: AppSpacing.md),
@@ -345,31 +395,38 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                 ],
-                // Tugas mendesak lebih dulu: pengajuan yang menunggu
-                // verifikasi ditampilkan sebelum statistik.
-                if (summary.pending > 0) ...[
-                  _PendingBanner(
-                    count: summary.pending,
-                    onTap: () => _openRentals(status: RentalStatus.pending),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
                 _HeroCard(summary: summary),
                 const SizedBox(height: AppSpacing.lg),
-                _StatGrid(
-                  summary: summary,
-                  onOpen: (status) => _openRentals(status: status),
+                SectionHeader(title: 'Aksi Cepat', dense: true),
+                const SizedBox(height: AppSpacing.sm),
+                _QuickActions(
+                  pendingApplications: _pendingApplications,
+                  onApplications: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminApplicationsScreen(),
+                    ),
+                  ),
+                  onAddItem: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ItemFormScreen(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                _RevenueCard(summary: summary),
+                SectionHeader(title: 'Ringkasan Operasional', dense: true),
+                const SizedBox(height: AppSpacing.sm),
+                _StatGrid(
+                  summary: summary,
+                  totalItems: _totalItems,
+                  onOpen: (status) => _openRentals(status: status),
+                  onOpenItems: _openItems,
+                ),
                 const SizedBox(height: AppSpacing.lg),
-                _InventoryStrip(totalItems: _totalItems),
-                const SizedBox(height: AppSpacing.xl),
                 SectionHeader(
-                  title: 'Transaksi terbaru',
+                  title: 'Transaksi Aktif & Terbaru',
                   subtitle: rentals.isEmpty
                       ? 'Belum ada transaksi untuk ditampilkan'
-                      : '${rentals.length} transaksi terakhir',
+                      : null,
                   actionLabel: 'Lihat semua',
                   onAction: () => _openRentals(),
                 ),
@@ -384,7 +441,7 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
                         'untuk diverifikasi.',
                   )
                 else
-                  for (final rental in rentals) ...[
+                  for (final rental in rentals.take(2)) ...[
                     RentalCard(
                       key: ValueKey(rental.id),
                       rental: rental,
@@ -393,100 +450,10 @@ class _DashboardSummaryTabState extends State<DashboardSummaryTab> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                const SizedBox(height: AppSpacing.lg),
-                _QuickActions(
-                  onReports: widget.onOpenReports,
-                  onApplications: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AdminApplicationsScreen(),
-                    ),
-                  ),
-                  onAddItem: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ItemFormScreen(),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Pita tugas: jumlah pengajuan yang menunggu verifikasi.
-///
-/// Hanya muncul saat ada pengajuan pending, sehingga dashboard langsung
-/// menuntun admin ke pekerjaan yang harus diselesaikan lebih dulu.
-class _PendingBanner extends StatelessWidget {
-  const _PendingBanner({required this.count, required this.onTap});
-
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.pendingBg,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: AppColors.warning.withValues(alpha: 0.35),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: const Icon(
-                  Icons.hourglass_top_rounded,
-                  size: 20,
-                  color: AppColors.warningText,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$count pengajuan menunggu',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.warningText,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Verifikasi agar stok dan jadwal sewa akurat.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.warningText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.warningText,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -530,63 +497,68 @@ class _HeroCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+          Divider(
+            height: AppSpacing.lg,
+            thickness: 1,
+            color: AppColors.sageLight.withValues(alpha: 0.25),
+          ),
+          Row(
             children: [
-              _HeroChip(
-                icon: Icons.receipt_long_rounded,
-                label: '${summary.totalTransaksi} transaksi',
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total sewa',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.sageLight,
+                      ),
+                    ),
+                    Text(
+                      Formatters.rupiah(summary.totalSewa),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textOnDark,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              _HeroChip(
-                icon: Icons.hourglass_top_rounded,
-                label: '${summary.pending} menunggu',
-              ),
-              _HeroChip(
-                icon: Icons.backpack_outlined,
-                label: '${summary.ongoing} berjalan',
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Denda',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.sageLight,
+                      ),
+                    ),
+                    Text(
+                      Formatters.rupiah(summary.totalDenda),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textOnDark,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroChip extends StatelessWidget {
-  const _HeroChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs + 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.sage.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.sageLight),
-          const SizedBox(width: AppSpacing.xs + 2),
+          const SizedBox(height: AppSpacing.sm),
           Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.sageLight,
-            ),
+            'Mencakup transaksi disetujui, berjalan, & selesai. '
+            'Denda hanya dari transaksi selesai.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.sageLight),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.04, duration: 300.ms);
   }
 }
 
@@ -597,7 +569,7 @@ class _StatData {
     required this.icon,
     required this.foreground,
     required this.background,
-    this.status,
+    required this.onTap,
   });
 
   final String label;
@@ -605,14 +577,21 @@ class _StatData {
   final IconData icon;
   final Color foreground;
   final Color background;
-  final RentalStatus? status;
+  final VoidCallback onTap;
 }
 
 class _StatGrid extends StatelessWidget {
-  const _StatGrid({required this.summary, required this.onOpen});
+  const _StatGrid({
+    required this.summary,
+    required this.totalItems,
+    required this.onOpen,
+    required this.onOpenItems,
+  });
 
   final ReportSummary summary;
+  final int totalItems;
   final ValueChanged<RentalStatus?> onOpen;
+  final VoidCallback onOpenItems;
 
   @override
   Widget build(BuildContext context) {
@@ -623,7 +602,7 @@ class _StatGrid extends StatelessWidget {
         icon: Icons.hourglass_top_rounded,
         foreground: AppColors.warning,
         background: AppColors.warningSurface,
-        status: RentalStatus.pending,
+        onTap: () => onOpen(RentalStatus.pending),
       ),
       _StatData(
         label: 'Berjalan',
@@ -631,7 +610,7 @@ class _StatGrid extends StatelessWidget {
         icon: Icons.backpack_outlined,
         foreground: AppColors.forest,
         background: AppColors.forestSurface,
-        status: RentalStatus.ongoing,
+        onTap: () => onOpen(RentalStatus.ongoing),
       ),
       _StatData(
         label: 'Selesai',
@@ -639,15 +618,15 @@ class _StatGrid extends StatelessWidget {
         icon: Icons.task_alt_rounded,
         foreground: AppColors.success,
         background: AppColors.successSurface,
-        status: RentalStatus.completed,
+        onTap: () => onOpen(RentalStatus.completed),
       ),
       _StatData(
-        label: 'Total Transaksi',
-        value: summary.totalTransaksi,
-        icon: Icons.receipt_long_rounded,
+        label: 'Total Barang',
+        value: totalItems,
+        icon: Icons.inventory_2_outlined,
         foreground: AppColors.info,
         background: AppColors.infoSurface,
-        status: null,
+        onTap: onOpenItems,
       ),
     ];
 
@@ -666,7 +645,7 @@ class _StatGrid extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final tile = tiles[index];
-            return _StatTile(data: tile, onTap: () => onOpen(tile.status));
+            return _StatTile(data: tile, onTap: tile.onTap);
           },
         );
       },
@@ -735,97 +714,14 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _RevenueCard extends StatelessWidget {
-  const _RevenueCard({required this.summary});
-
-  final ReportSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    return SummaryCard(
-      title: 'Ringkasan pendapatan',
-      children: [
-        InfoRow(
-          label: 'Total sewa',
-          value: Formatters.rupiah(summary.totalSewa),
-        ),
-        InfoRow(
-          label: 'Total denda',
-          value: Formatters.rupiah(summary.totalDenda),
-        ),
-        const Divider(height: AppSpacing.lg),
-        InfoRow(
-          label: 'Total pendapatan',
-          value: Formatters.rupiah(summary.totalPendapatan),
-          emphasize: true,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Pendapatan mencakup transaksi disetujui, berjalan, dan selesai. '
-          'Denda hanya dihitung dari transaksi selesai.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-}
-
-class _InventoryStrip extends StatelessWidget {
-  const _InventoryStrip({required this.totalItems});
-
-  final int totalItems;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.card),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.forestSurface,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: const Icon(
-                Icons.inventory_2_outlined,
-                color: AppColors.forest,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Inventaris Barang',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  Text(
-                    '$totalItems',
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _QuickActions extends StatelessWidget {
   const _QuickActions({
-    required this.onReports,
+    required this.pendingApplications,
     required this.onApplications,
     required this.onAddItem,
   });
 
-  final VoidCallback onReports;
+  final int pendingApplications;
   final VoidCallback onApplications;
   final VoidCallback onAddItem;
 
@@ -835,9 +731,9 @@ class _QuickActions extends StatelessWidget {
       children: [
         Expanded(
           child: _QuickActionChip(
-            icon: Icons.bar_chart_rounded,
-            label: 'Laporan Pendapatan',
-            onTap: onReports,
+            icon: Icons.add_rounded,
+            label: 'Tambah Barang',
+            onTap: onAddItem,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -845,15 +741,8 @@ class _QuickActions extends StatelessWidget {
           child: _QuickActionChip(
             icon: Icons.assignment_ind_outlined,
             label: 'Permohonan Admin',
+            badgeCount: pendingApplications,
             onTap: onApplications,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: _QuickActionChip(
-            icon: Icons.add_rounded,
-            label: '+ Tambah Barang',
-            onTap: onAddItem,
           ),
         ),
       ],
@@ -866,11 +755,15 @@ class _QuickActionChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+
+  /// Jumlah pengajuan baru; badge hanya tampil bila lebih dari nol.
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -882,28 +775,58 @@ class _QuickActionChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
+            horizontal: AppSpacing.md,
             vertical: AppSpacing.md,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: AppColors.border),
           ),
-          child: Column(
+          child: Row(
             children: [
-              Icon(icon, color: AppColors.moss, size: 20),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  height: 1.25,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.forestSurface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(icon, color: AppColors.moss, size: 18),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.25,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
+              if (badgeCount > 0) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs + 2,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warningSurface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.warningText,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

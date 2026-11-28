@@ -116,13 +116,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  @override
   void _openCart() {
     Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
   }
 
+  @override
   Widget build(BuildContext context) {
     final inCart = CartScope.of(context).quantityFor(_item.id);
     final maxAddable = (_item.stok - inCart).clamp(0, _item.stok);
@@ -151,59 +151,61 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             borderRadius: 0,
                           ),
                         ),
-                      const Positioned.fill(
-                        child: IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                stops: [0, 0.55, 1],
-                                colors: [
-                                  Color(0x6610241F),
-                                  Color(0x0010241F),
-                                  Color(0xB310241F),
-                                ],
+                        const Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  stops: [0, 0.55, 1],
+                                  colors: [
+                                    Color(0x6610241F),
+                                    Color(0x0010241F),
+                                    Color(0xB310241F),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        top: topInset + AppSpacing.sm,
-                        left: AppSpacing.screen,
-                        child: _CircleAction(
-                          icon: Icons.arrow_back_rounded,
-                          tooltip: 'Kembali',
-                          onTap: () => Navigator.of(context).pop(),
-                        ),
-                      ),
-                      Positioned(
-                        top: topInset + AppSpacing.sm,
-                        right: AppSpacing.screen,
-                        child: _CartCircleButton(
-                          count: CartScope.of(context).totalQuantity,
-                          onTap: _openCart,
-                        ),
-                      ),
-                      if (_refreshing)
                         Positioned(
-                          top: topInset + AppSpacing.sm + 52,
-                          right: AppSpacing.screen,
+                          top: topInset + AppSpacing.sm,
+                          left: AppSpacing.screen,
                           child: _CircleAction(
-                            icon: null,
-                            tooltip: 'Memuat detail',
-                            onTap: null,
-                            child: const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
+                            icon: Icons.arrow_back_rounded,
+                            tooltip: 'Kembali',
+                            onTap: () => Navigator.of(context).pop(),
                           ),
                         ),
-                    ],
+                        Positioned(
+                          top: topInset + AppSpacing.sm,
+                          right: AppSpacing.screen,
+                          child: _CartCircleButton(
+                            count: CartScope.of(context).totalQuantity,
+                            onTap: _openCart,
+                          ),
+                        ),
+                        if (_refreshing)
+                          Positioned(
+                            top: topInset + AppSpacing.sm + 52,
+                            right: AppSpacing.screen,
+                            child: _CircleAction(
+                              icon: null,
+                              tooltip: 'Memuat detail',
+                              onTap: null,
+                              child: const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
                 ),
                 // Konten utama menumpuk ke atas hero dengan sudut atas membulat.
                 SliverToBoxAdapter(
@@ -249,13 +251,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                       _item.stok > 0
                                           ? 'Tersedia: ${_item.stok} unit'
                                           : 'Stok habis',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.copyWith(
-                                        color: _item.stok > 0
-                                            ? AppColors.textSecondary
-                                            : AppColors.error,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: _item.stok > 0
+                                                ? AppColors.textSecondary
+                                                : AppColors.error,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -480,83 +483,6 @@ class _KategoriPill extends StatelessWidget {
   }
 }
 
-/// Baris atribut nyata barang: stok dan denda harian. Tidak ada rating atau
-/// metrik lain karena model [Item] tidak menyimpannya.
-class _SpecRow extends StatelessWidget {
-  const _SpecRow({required this.item});
-
-  final Item item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _SpecTile(
-            icon: Icons.inventory_2_outlined,
-            label: 'Ketersediaan',
-            value: item.stok > 0 ? '${item.stok} unit' : 'Stok habis',
-            valueColor: item.stok > 0 ? AppColors.forest : AppColors.error,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _SpecTile(
-            icon: Icons.report_gmailerrorred_rounded,
-            label: 'Denda keterlambatan',
-            value: '${Formatters.rupiah(item.dendaHarian)}/hari',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SpecTile extends StatelessWidget {
-  const _SpecTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: AppColors.forest),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
 /// Deskripsi dengan toggle "Baca selengkapnya" hanya bila teks benar-benar
 /// melebihi batas baris, sehingga deskripsi pendek tetap tampil utuh.
 class _Description extends StatelessWidget {
@@ -734,7 +660,6 @@ class _BottomActionBar extends StatelessWidget {
     );
   }
 }
-
 
 /// Tombol keranjang bulat di atas hero image dengan badge jumlah.
 class _CartCircleButton extends StatelessWidget {

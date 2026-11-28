@@ -93,6 +93,20 @@ class TokenStorage {
     }
   }
 
+  /// Menghapus flag onboarding (dipakai saat logout agar onboarding tampil lagi).
+  Future<void> clearOnboardingSeen() async {
+    _memoryOnboardingSeen = false;
+    if (_useMemoryFallback) return;
+    try {
+      await _storage
+          .delete(key: _onboardingKey)
+          .timeout(const Duration(milliseconds: 500));
+    } catch (error) {
+      debugPrint('TokenStorage.clearOnboardingSeen fallback ke memori: $error');
+      _useMemoryFallback = true;
+    }
+  }
+
   @visibleForTesting
   bool get usesMemoryFallback => _useMemoryFallback;
 }
