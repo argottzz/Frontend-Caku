@@ -9,6 +9,8 @@ import '../../widgets/feedback_dialog.dart';
 import '../../widgets/form_widgets.dart';
 import '../../widgets/state_views.dart';
 import 'auth_shell.dart';
+import '../admin/admin_shell.dart';
+import '../customer/customer_shell.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -58,14 +60,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _loading = true);
     try {
-      await AuthScope.read(context).register(
+      final user = await AuthScope.read(context).register(
         nama: _namaController.text,
         email: _emailController.text,
         phoneNumber: _phoneController.text,
         password: _passwordController.text,
       );
       if (!mounted) return;
-      // RootGate menutup rute ini setelah sesi aktif.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => user.isAdmin
+              ? const AdminShell()
+              : const CustomerShell(),
+        ),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
