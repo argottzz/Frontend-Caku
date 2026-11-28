@@ -63,11 +63,13 @@ class AuthController extends ChangeNotifier {
     required String nama,
     required String email,
     required String password,
+    required String phoneNumber,
   }) async {
     final result = await _service.register(
       nama: nama,
       email: email,
       password: password,
+      phoneNumber: phoneNumber,
     );
     await _applySession(result);
     return result.user;
@@ -96,6 +98,7 @@ class AuthController extends ChangeNotifier {
     _status = AuthStatus.unauthenticated;
     _client.token = null;
     await storage.clear();
+    await storage.clearOnboardingSeen();
     notifyListeners();
   }
 
@@ -117,5 +120,17 @@ class AuthController extends ChangeNotifier {
     _status = AuthStatus.authenticated;
     _sessionExpired = false;
     notifyListeners();
+  }
+
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    return _service.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
+    );
   }
 }

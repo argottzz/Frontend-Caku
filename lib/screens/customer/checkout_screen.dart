@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
@@ -15,6 +16,7 @@ import '../../widgets/form_widgets.dart';
 import '../../widgets/image_source_field.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
+import 'payment_qr_screen.dart';
 import '../shared/rental_detail_screen.dart';
 
 /// Pengajuan sewa: pilih periode, tinjau rincian, unggah bukti transfer, lalu
@@ -49,10 +51,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   DateTime? _start;
   DateTime? _end;
   FileUpload? _proof;
+  FileUpload? _identityProof;
+  String _paymentMethod = 'transfer';
   bool _submitting = false;
   String? _startError;
   String? _endError;
   String? _proofError;
+  String? _identityProofError;
   String? _formError;
 
   int get _days {
@@ -144,12 +149,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       endError = 'Tanggal selesai tidak boleh sebelum tanggal mulai.';
     }
 
-    final proofError = _proof == null ? 'Bukti transfer wajib diunggah.' : null;
+    final proofError = _paymentMethod == 'transfer' && _proof == null
+        ? 'Bukti transfer wajib diunggah.'
+        : null;
+    final identityProofError = _identityProof == null
+        ? 'Foto jaminan KTP wajib diunggah.'
+        : null;
 
     setState(() {
       _startError = startError;
       _endError = endError;
       _proofError = proofError;
+      _identityProofError = identityProofError;
       _formError = cart.isEmpty
           ? 'Keranjang kosong. Pilih perlengkapan terlebih dahulu.'
           : (_hasMissingOriginalPrice
@@ -161,6 +172,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (startError != null ||
         endError != null ||
         proofError != null ||
+        identityProofError != null ||
         cart.isEmpty ||
         _hasMissingOriginalPrice) {
       return;
@@ -174,7 +186,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         items: cart.lines
             .map((line) => (idItem: line.item.id, jumlah: line.quantity))
             .toList(growable: false),
-        buktiTransfer: _proof!,
+        buktiTransfer: _paymentMethod == 'transfer' ? _proof : null,
+        metodePembayaran: _paymentMethod == 'qr' ? 'qr_code' : 'transfer',
+        identityImage: _identityProof!,
       );
 
       cart.clear();
@@ -184,7 +198,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       AppSnack.success(context, 'Pengajuan sewa berhasil dikirim.');
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => RentalDetailScreen(rentalId: rental.id),
+          builder: (_) => _paymentMethod == 'qr'
+               ? PaymentQrScreen(rental: rental)
+               : RentalDetailScreen(rentalId: rental.id),
         ),
       );
     } on ApiException catch (error) {
@@ -218,10 +234,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final estimatedTotal = totalPerDay * _days;
 
     return Scaffold(
-      appBar: CakuAppBar(
-        title: 'Checkout',
-        showBack: true,
-      ),
+      appBar: CakuAppBar(title: 'Checkout', showBack: true),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -380,11 +393,55 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 SummaryCard(
                   title: 'Pembayaran',
                   children: [
-                    ImageSourceField(
-                      label: 'Bukti transfer',
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _PaymentMethodTab(
+                              label: 'Transfer',
+                              selected: _paymentMethod == 'transfer',
+                              onTap: () =>
+                                  setState(() => _paymentMethod = 'transfer'),
+                            ),
+                          ),
+                          Expanded(
+                            child: _PaymentMethodTab(
+                              label: 'QR Code',
+                              selected: _paymentMethod == 'qr',
+                              onTap: () =>
+                                  setState(() => _paymentMethod = 'qr'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                     const SizedBox(height: AppSpacing.md),
+                     if (_paymentMethod == 'qr')
+                       const InlineNotice(
+                         message:
+                             'Setelah pesanan dibuat, kode QR pembayaran akan '
+                             'ditampilkan untuk dipindai atau diunduh.',
+                         icon: Icons.qr_code_rounded,
+                       ),
+                     if (_paymentMethod == 'qr')
+                       const SizedBox(height: AppSpacing.md),
+                     if (_paymentMethod == 'transfer') ...[
+                       _BankInfoCard(total: estimatedTotal),
+                       const SizedBox(height: AppSpacing.md),
+                     ],
+                     if (_paymentMethod == 'transfer')
+                       ImageSourceField(
+label: 'Bukti transfer',
                       required: true,
                       value: _proof,
                       aspectRatio: 4 / 3,
+                      compact: true,
                       helper:
                           'JPG, JPEG, PNG, atau WEBP. Maksimal 5 MB. '
                           'Pastikan nominal dan tanggal transfer terlihat.',
@@ -395,7 +452,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         });
                       },
                     ),
-                    if (_proofError != null) ...[
+                    if (_paymentMethod == 'transfer' && _proofError != null) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         _proofError!,
@@ -406,11 +463,51 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ],
                     const SizedBox(height: AppSpacing.sm),
+                    if (_paymentMethod == 'transfer')
+                      const InlineNotice(
+                        message:
+                            'Unggah bukti transfer sesuai total sewa. Admin akan '
+                            'memverifikasi pengajuan sebelum masa sewa dimulai.',
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SummaryCard(
+                  title: 'Jaminan Identitas',
+                  children: [
+                    ImageSourceField(
+                      label: 'Foto jaminan KTP',
+                      required: true,
+                      value: _identityProof,
+                      aspectRatio: 4 / 3,
+                      compact: true,
+                      helper:
+                          'JPG, JPEG, PNG, atau WEBP. Maksimal 5 MB. '
+                          'Pastikan identitas terlihat jelas.',
+                      onChanged: (upload) {
+                        setState(() {
+                          _identityProof = upload;
+                          _identityProofError = null;
+                        });
+                      },
+                    ),
+                    if (_identityProofError != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        _identityProofError!,
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
                     const InlineNotice(
                       message:
-                          'Unggah bukti transfer sesuai total sewa. Admin akan '
-                          'memverifikasi pengajuan sebelum masa sewa dimulai.',
-                      icon: Icons.receipt_long_outlined,
+                          'Foto jaminan KTP wajib diunggah untuk setiap '
+                          'transaksi penyewaan.',
+                      icon: Icons.badge_outlined,
                     ),
                   ],
                 ),
@@ -468,6 +565,118 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+class _PaymentMethodTab extends StatelessWidget {
+  const _PaymentMethodTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? AppColors.white : AppColors.forest;
+    return Material(
+      color: selected ? AppColors.forest : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: foreground,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BankInfoCard extends StatelessWidget {
+  const _BankInfoCard({required this.total});
+
+  final double total;
+
+  static const String _accountNumber = '1234567890';
+  static const String _accountName = 'CAKU Outdoor';
+  static const String _bank = 'BCA';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.forestSurface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.sage),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Rekening Tujuan',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '$_bank $_accountNumber ($_accountName)',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.forest,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Nominal: ${Formatters.rupiah(total)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(
+                    const ClipboardData(text: _accountNumber),
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Nomor rekening disalin')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.copy_rounded, size: 16),
+                label: const Text('Salin'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

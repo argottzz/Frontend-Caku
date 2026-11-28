@@ -75,7 +75,7 @@ abstract final class Formatters {
     final local = value.toLocal();
     final hour = local.hour.toString().padLeft(2, '0');
     final minute = local.minute.toString().padLeft(2, '0');
-    return '${date(local)} • $hour:$minute';
+    return '${date(local)} - $hour:$minute';
   }
 
   /// Format yang diterima backend: `YYYY-MM-DD`.

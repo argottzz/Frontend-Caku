@@ -13,6 +13,10 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (background, foreground) = switch (status) {
+      RentalStatus.awaitingPayment => (
+        AppColors.warningSurface,
+        AppColors.warningText,
+      ),
       RentalStatus.pending => (AppColors.pendingBg, AppColors.pendingText),
       RentalStatus.approved => (AppColors.approvedBg, AppColors.approvedText),
       RentalStatus.ongoing => (AppColors.ongoingBg, AppColors.ongoingText),
@@ -29,6 +33,7 @@ class StatusBadge extends StatelessWidget {
       background: background,
       dense: dense,
       icon: switch (status) {
+        RentalStatus.awaitingPayment => Icons.qr_code_rounded,
         RentalStatus.pending => Icons.schedule,
         RentalStatus.approved => Icons.check_circle,
         RentalStatus.ongoing => Icons.autorenew,

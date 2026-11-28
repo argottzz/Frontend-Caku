@@ -189,7 +189,12 @@ class ApiClient {
     required Map<String, String> fields,
     Map<String, FileUpload> files = const {},
   }) {
-    return _executeMultipart(path, fields: fields, files: files, method: 'PATCH');
+    return _executeMultipart(
+      path,
+      fields: fields,
+      files: files,
+      method: 'PATCH',
+    );
   }
 
   Future<ApiResponse> _executeMultipart(

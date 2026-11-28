@@ -1,6 +1,7 @@
 import 'json_utils.dart';
 
 enum RentalStatus {
+  awaitingPayment,
   pending,
   approved,
   ongoing,
@@ -9,6 +10,7 @@ enum RentalStatus {
 
   static RentalStatus fromApi(Object? value) {
     return switch ('$value'.toLowerCase()) {
+      'awaiting_payment' => RentalStatus.awaitingPayment,
       'approved' => RentalStatus.approved,
       'ongoing' => RentalStatus.ongoing,
       'completed' => RentalStatus.completed,
@@ -17,9 +19,13 @@ enum RentalStatus {
     };
   }
 
-  String get apiValue => name;
+  String get apiValue => switch (this) {
+    RentalStatus.awaitingPayment => 'awaiting_payment',
+    _ => name,
+  };
 
   String get label => switch (this) {
+    RentalStatus.awaitingPayment => 'Menunggu Pembayaran',
     RentalStatus.pending => 'Menunggu',
     RentalStatus.approved => 'Disetujui',
     RentalStatus.ongoing => 'Berjalan',
@@ -28,6 +34,7 @@ enum RentalStatus {
   };
 
   String get description => switch (this) {
+    RentalStatus.awaitingPayment => 'Menunggu pembayaran QR',
     RentalStatus.pending => 'Menunggu verifikasi admin',
     RentalStatus.approved => 'Siap diambil sesuai jadwal',
     RentalStatus.ongoing => 'Sedang dalam masa sewa',
@@ -147,6 +154,10 @@ class ReturnRentalResult extends Rental {
     required super.tanggalKembaliAktual,
     required super.durasiHari,
     required super.buktiTransferUrl,
+    super.identityImageUrl,
+    super.metodePembayaran,
+    super.qrCodePayload,
+    super.paidAt,
     required super.status,
     required super.kondisiPengembalian,
     required super.catatanPengembalian,
@@ -179,6 +190,10 @@ class ReturnRentalResult extends Rental {
       tanggalKembaliAktual: rental.tanggalKembaliAktual,
       durasiHari: rental.durasiHari,
       buktiTransferUrl: rental.buktiTransferUrl,
+      identityImageUrl: rental.identityImageUrl,
+      metodePembayaran: rental.metodePembayaran,
+      qrCodePayload: rental.qrCodePayload,
+      paidAt: rental.paidAt,
       status: rental.status,
       kondisiPengembalian: rental.kondisiPengembalian,
       catatanPengembalian: rental.catatanPengembalian,
@@ -210,6 +225,10 @@ class Rental {
     required this.tanggalKembaliAktual,
     required this.durasiHari,
     required this.buktiTransferUrl,
+    this.identityImageUrl = '',
+    this.metodePembayaran = 'transfer',
+    this.qrCodePayload,
+    this.paidAt,
     required this.status,
     required this.kondisiPengembalian,
     required this.catatanPengembalian,
@@ -232,6 +251,10 @@ class Rental {
   final DateTime? tanggalKembaliAktual;
   final int durasiHari;
   final String buktiTransferUrl;
+  final String identityImageUrl;
+  final String metodePembayaran;
+  final String? qrCodePayload;
+  final DateTime? paidAt;
   final RentalStatus status;
   final String? kondisiPengembalian;
   final String? catatanPengembalian;
@@ -262,7 +285,16 @@ class Rental {
       buktiTransferUrl: Json.asString(
         json['bukti_transfer_url'] ?? json['bukti_transfer'],
       ).trim(),
-      status: RentalStatus.fromApi(json['status']),
+      identityImageUrl: Json.asString(
+        json['identity_image_url'] ?? json['identity_image'],
+      ).trim(),
+      metodePembayaran: Json.asString(
+         json['metode_pembayaran'],
+         'transfer',
+       ),
+       qrCodePayload: Json.asStringOrNull(json['qr_code_payload']),
+       paidAt: Json.asDate(json['paid_at']),
+       status: RentalStatus.fromApi(json['status']),
       kondisiPengembalian: Json.asStringOrNull(json['kondisi_pengembalian']),
       catatanPengembalian: Json.asStringOrNull(json['catatan_pengembalian']),
       jumlahItem: Json.asInt(json['jumlah_item']),

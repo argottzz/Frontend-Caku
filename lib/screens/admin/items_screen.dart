@@ -17,12 +17,14 @@ import '../../widgets/confirm_dialog.dart';
 import '../../widgets/item_image.dart';
 import '../../widgets/layout.dart';
 import '../../widgets/state_views.dart';
+import 'categories_screen.dart';
 import 'item_form_screen.dart';
 
 /// Daftar barang admin: cari, filter kategori, tambah, ubah, hapus.
 ///
-/// Kategori hanya bisa dibaca dari API (tidak ada CRUD kategori), sehingga
-/// layar ini tidak menyediakan pengelolaan kategori.
+/// Pengelolaan kategori punya layar sendiri ([CategoriesScreen]); ikon di app
+/// bar membukanya, dan daftar kategori di layar ini dimuat ulang setelah
+/// kembali agar filter serta form barang memakai data terbaru.
 class ItemsScreen extends StatefulWidget {
   const ItemsScreen({super.key});
 
@@ -145,6 +147,16 @@ class _ItemsScreenState extends State<ItemsScreen> {
     }
   }
 
+  /// Membuka Manajemen Kategori lalu menyegarkan kategori dan barang, karena
+  /// perubahan nama kategori ikut memengaruhi label pada daftar barang.
+  Future<void> _openCategories() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CategoriesScreen()));
+    if (!mounted) return;
+    await _refresh();
+  }
+
   Future<void> _delete(Item item) async {
     final confirmed = await showConfirmDialog(
       context,
@@ -179,6 +191,13 @@ class _ItemsScreenState extends State<ItemsScreen> {
         // ItemsScreen adalah tab shell admin, tetapi juga dibuka sebagai rute
         // dari aksi cepat dashboard; sediakan jalan kembali saat itu terjadi.
         showBack: Navigator.of(context).canPop(),
+        actions: [
+          IconButton(
+            tooltip: 'Kelola kategori',
+            onPressed: _openCategories,
+            icon: const Icon(Icons.category_outlined, size: 22),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),

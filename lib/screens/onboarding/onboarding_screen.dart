@@ -15,7 +15,6 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _controller = PageController();
   int _index = 0; // ignore: prefer_final_fields
 
   static const List<_OnboardingPage> _pages = <_OnboardingPage>[
@@ -40,15 +39,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       keyword: 'Berpetualang',
       body: 'Semua kebutuhan outdoor-mu tersedia. Mulai perjalananmu sekarang.',
       image: 'asset/images/onboarding/onboarding-3.jpg',
-      fullBleed: false,
+      fullBleed: true,
     ),
   ];
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   Future<void> _finish() async {
     await AppScope.read(context).storage.writeOnboardingSeen();
@@ -59,10 +52,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _next() {
-    _controller.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    if (_index < _pages.length - 1) {
+      setState(() => _index++);
+    } else {
+      _finish();
+    }
+  }
+
+  void _back() {
+    if (_index > 0) {
+      setState(() => _index--);
+    }
   }
 
   @override
@@ -75,10 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         total: _pages.length,
         onSkip: _finish,
         onNext: _next,
-        onBack: () => _controller.previousPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        ),
+        onBack: _back,
       );
     }
     return _BoxedOnboarding(
@@ -86,10 +83,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       index: _index,
       total: _pages.length,
       onFinish: _finish,
-      onBack: () => _controller.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      ),
+      onBack: _back,
     );
   }
 }
@@ -183,24 +177,25 @@ class _FullBleedOnboarding extends StatelessWidget {
                     onTap: onBack,
                   ),
                 const Spacer(),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: TextButton(
-                    onPressed: onSkip,
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.forest,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.xs,
-                      ),
-                      minimumSize: const Size(44, 36),
+                if (index < total - 1)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
-                    child: const Text('Lewatkan'),
+                    child: TextButton(
+                      onPressed: onSkip,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.forest,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.xs,
+                        ),
+                        minimumSize: const Size(44, 36),
+                      ),
+                      child: const Text('Lewatkan'),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -231,8 +226,7 @@ class _FullBleedOnboarding extends StatelessWidget {
                     _Dots(index: index, total: total),
                     const SizedBox(height: AppSpacing.xxl),
                     PrimaryButton(
-                      // Teks sama persis dengan CTA halaman 2.
-                      label: 'Lanjut',
+                      label: index == total - 1 ? 'Mulai' : 'Lanjut',
                       onPressed: onNext,
                     ),
                   ],

@@ -35,7 +35,7 @@ class CategoryStrip extends StatelessWidget {
       ),
       for (final category in categories)
         CategoryTile(
-          label: category.nama,
+          label: categoryShortLabel(category.nama),
           icon: categoryIconFor(category.nama),
           selected: selectedId == category.id,
           onTap: () => onSelect(category.id),
@@ -99,6 +99,25 @@ IconData categoryIconFor(String nama) {
     return Icons.water_drop_outlined;
   }
   return Icons.inventory_2_outlined;
+}
+
+/// Memperpendek nama kategori menjadi 1-2 kata agar tidak terpotong elipsis.
+String categoryShortLabel(String nama) {
+  final n = nama.toLowerCase();
+  if (n.contains('tenda')) return 'Tenda';
+  if (n.contains('tidur') || n.contains('sleeping') || n.contains('matras')) {
+    return 'Tidur';
+  }
+  if (n.contains('masak') || n.contains('cookware')) return 'Masak';
+  if (n.contains('listrik') || n.contains('lampu') || n.contains('senter')) {
+    return 'Listrik';
+  }
+  if (n.contains('pakaian') || n.contains('jaket')) return 'Pakaian';
+  if (n.contains('tas') || n.contains('carrier')) return 'Carrier';
+  if (n.contains('sepatu')) return 'Sepatu';
+  if (n.contains('air') || n.contains('botol')) return 'Air';
+  final parts = nama.trim().split(RegExp(r'\s+'));
+  return parts.isEmpty ? nama : parts.first;
 }
 
 /// Tile kategori tunggal: kotak ikon dengan label di bawahnya.

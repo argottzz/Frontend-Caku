@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>CAKU menyimpan gambar QR pembayaran ke galeri foto Anda.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CAKU membutuhkan akses galeri untuk menyimpan gambar QR pembayaran.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

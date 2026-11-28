@@ -19,6 +19,30 @@ class CatalogService {
     return response.dataList.map(Category.fromJson).toList(growable: false);
   }
 
+  /// Menambah kategori baru (khusus Admin).
+  Future<Category> createCategory({required String nama}) async {
+    final response = await _client.post('/categories', body: {'nama': nama});
+    return Category.fromJson(response.dataMap);
+  }
+
+  /// Mengubah nama kategori (khusus Admin).
+  Future<Category> updateCategory({
+    required int id,
+    required String nama,
+  }) async {
+    final response = await _client.patch(
+      '/categories/$id',
+      body: {'nama': nama},
+    );
+    return Category.fromJson(response.dataMap);
+  }
+
+  /// Menghapus kategori yang tidak dipakai barang (khusus Admin).
+  Future<String> deleteCategory(int id) async {
+    final response = await _client.delete('/categories/$id');
+    return response.message;
+  }
+
   Future<ItemPage> items({
     String? search,
     int? idKategori,

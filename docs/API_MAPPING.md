@@ -17,10 +17,17 @@ ke PostgreSQL Aiven.
 | Method | Path | Auth | Role | Request | Response `data` |
 |---|---|---|---|---|---|
 | GET | `/api/health` | – | – | – | `{ status: "ok" }` |
-| POST | `/api/auth/register` | – | – | JSON `{nama, email, password}` | user + `token` |
+| POST | `/api/auth/register` | – | – | JSON `{nama, email, phone_number, password}` | user + `token` |
 | POST | `/api/auth/login` | – | – | JSON `{email, password}` | user + `token` |
 | GET | `/api/auth/me` | Bearer | customer/admin | – | user |
+| PATCH | `/api/auth/change-password` | Bearer | customer/admin | JSON `{current_password, new_password, confirm_password}` | – (pesan sukses) |
+| PATCH | `/api/users/me` | Bearer | customer/admin | JSON `{nama?, phone_number?}` | user |
+| PATCH | `/api/users/me/profile-image` | Bearer | customer/admin | multipart, file `profile_image` (wajib) | user |
+| DELETE | `/api/users/me/profile-image` | Bearer | customer/admin | – | user |
 | GET | `/api/categories` | Bearer | customer/admin | – | `[{id_kategori, nama}]` |
+| POST | `/api/categories` | Bearer | admin | JSON `{nama}` | `{id_kategori, nama}` |
+| PATCH | `/api/categories/:id` | Bearer | admin | JSON `{nama}` | `{id_kategori, nama}` |
+| DELETE | `/api/categories/:id` | Bearer | admin | – | `{ id_kategori }` (`409` bila masih dipakai barang) |
 | GET | `/api/items` | Bearer | customer/admin | query `search`, `id_kategori`, `page`, `limit` | item[] + `pagination` |
 | GET | `/api/items/:id` | Bearer | customer/admin | – | item |
 | POST | `/api/items` | Bearer | admin | multipart: `id_kategori`, `nama_item`, `deskripsi?`, `stok`, `harga_sewa_harian`, `denda_harian`, file `image?` | item |
@@ -28,10 +35,11 @@ ke PostgreSQL Aiven.
 | DELETE | `/api/items/:id` | Bearer | admin | – | `{ id_items }` |
 | GET | `/api/rentals` | Bearer | customer/admin | query `status`, `page`, `limit` | rental[] + `pagination` |
 | GET | `/api/rentals/:id` | Bearer | customer/admin | – | rental + `items[]` |
-| POST | `/api/rentals` | Bearer | customer | multipart: `tanggal_mulai`, `tanggal_selesai`, `items` (JSON string), file `bukti_transfer` (wajib) | rental + `items[]` |
+| POST | `/api/rentals` | Bearer | customer | multipart: `tanggal_mulai`, `tanggal_selesai`, `items` (JSON string), file `bukti_transfer` (wajib) dan `identity_image` | rental + `items[]` |
 | DELETE | `/api/rentals/:id` | Bearer | customer | – | `{ id_rental }` (hanya pending milik sendiri) |
 | PATCH | `/api/rentals/:id/status` | Bearer | admin | JSON `{status: approved\|ongoing\|rejected}` | rental |
 | POST | `/api/rentals/:id/return` | Bearer | admin | JSON `{tanggal_kembali_aktual, kondisi_pengembalian: Baik\|Rusak\|Hilang, catatan_pengembalian?}` | rental + `perlu_penyesuaian_stok` |
+| PATCH | `/api/rentals/:id/replacement` | Bearer | admin | JSON `{status: "Completed"}` | rental |
 | GET | `/api/reports/summary` | Bearer | admin | query `start_date`, `end_date`, `status`, `page`, `limit` | `{ringkasan, rentals}` + `pagination` |
 | POST | `/api/admin-applications` | Bearer | customer | JSON pengajuan admin | aplikasi |
 | GET | `/api/admin-applications/me` | Bearer | customer/admin | – | aplikasi milik sendiri |
@@ -69,9 +77,10 @@ Catatan penting:
 | Riwayat sewa | `GET /rentals?page&limit&status` | Hanya rental milik sendiri. |
 | Detail sewa | `GET /rentals/:id` | Termasuk `items[]`, `total_bayar`, `total_denda`. |
 | Batalkan pengajuan | `DELETE /rentals/:id` | Hanya status `pending`. |
-| Profil | `GET /auth/me` | Hanya baca; tidak ada endpoint ubah profil. |
+| Profil | `GET /auth/me` + `PATCH /users/me` | Ubah nama/telepon dan foto profil (unggah/hapus). |
 | Ajukan jadi admin | `POST /admin-applications` | Form permohonan dari Profil. |
 | Status permohonan | `GET /admin-applications/me` | Ditampilkan di Profil. |
+| Ubah kata sandi | `PATCH /auth/change-password` | Layar `ChangePasswordScreen`. |
 
 ### Admin
 
@@ -80,6 +89,7 @@ Catatan penting:
 | Dashboard | `GET /reports/summary` | Ringkasan status + pendapatan. |
 | Laporan | `GET /reports/summary?start_date&end_date&status` | Filter tanggal berdasarkan `tanggal_mulai`. |
 | Daftar barang | `GET /items?search&id_kategori&page&limit` | Sama seperti katalog. |
+| Manajemen kategori | `GET/POST/PATCH/DELETE /categories` | Khusus Admin. `409` saat nama duplikat atau kategori masih dipakai barang. |
 | Tambah barang | `POST /items` (multipart) | `image` opsional, JPG/JPEG/PNG/WEBP ≤ 5 MB. |
 | Ubah barang | `PUT /items/:id` (multipart) | Tanpa file → gambar lama dipertahankan (`COALESCE`). |
 | Hapus barang | `DELETE /items/:id` | `409` bila sudah dipakai rental. |
@@ -88,19 +98,25 @@ Catatan penting:
 | Permohonan admin | `GET /admin-applications` | Filter status di klien setelah data dimuat. |
 | Detail permohonan | `GET /admin-applications/:id` | Data pemohon + status. |
 | Setujui/tolak | `PATCH /admin-applications/:id/approve\|reject` | Tanpa alasan; kontrak hanya menerima aksi. |
-| Profil | `GET /auth/me` | Hanya baca. |
+| Profil admin | `GET /auth/me` + `PATCH /users/me` | Sama seperti customer; ditambah menu Permohonan Admin (`GET /admin-applications?status=pending` untuk lencana "N Baru") dan Kelola Kategori. |
+| Ubah kata sandi | `PATCH /auth/change-password` | Layar `ChangePasswordScreen`. |
 
 ## Gap yang terdokumentasi (bukan bug frontend)
 
 1. **Keranjang** – tidak ada endpoint cart. Keranjang disimpan di aplikasi dan
    dikirim sebagai `items[]` saat checkout.
-2. **CRUD kategori** – backend hanya menyediakan `GET /categories`. Tidak ada
-   create/update/delete kategori, jadi kategori hanya tampil sebagai filter
-   (Beranda, Katalog, daftar barang admin) tanpa layar pengelolaan.
-3. **Ubah profil & ubah password** – tidak ada endpoint update user/profil
-   maupun ganti password. Layar Profil hanya menampilkan data `GET /auth/me`;
-   entri Edit Profil dan Ubah Password dihapus agar tidak ada aksi tanpa
-   dukungan backend (`desain.md` §8.11–8.12).
+2. **CRUD kategori** – backend sudah menyediakan `POST`, `PATCH`, dan `DELETE
+   /categories` khusus Admin (lihat tabel di atas). Frontend memakai layar
+   Manajemen Kategori (`CategoriesScreen`) yang dibuka dari daftar barang admin
+   dan aksi cepat dashboard. Endpoint `GET /categories` tetap dipakai filter
+   katalog dan form barang.
+3. **Ubah profil, foto profil & ubah password** – sudah didukung backend:
+   `PATCH /users/me` (`nama`, `phone_number`), `PATCH`/`DELETE
+   /users/me/profile-image`, dan `PATCH /auth/change-password`. Layar Profil
+   memakai ketiganya (dialog Edit Profil, ikon kamera pada avatar, dan
+   `ChangePasswordScreen`). Yang **belum** ada endpoint-nya adalah pengaturan
+   teks Aturan & Ketentuan Sewa — tidak ada route settings/terms, jadi baris
+   itu hanya menampilkan teks read-only dari klien.
 4. **Alasan penolakan** – `PATCH /rentals/:id/status` hanya menerima `status`.
    Tidak ada field alasan; dialog penolakan tidak meminta alasan.
 5. **Nomor rekening tujuan transfer** – tidak ada di kontrak API. Instruksi
@@ -109,7 +125,9 @@ Catatan penting:
    customer mengajukan lewat Profil (`POST /admin-applications`), admin
    meninjau di layar Permohonan Admin (`GET /admin-applications`,
    `PATCH .../approve|reject`).
-7. **Daftar pengguna** – tidak ada endpoint users; admin tidak dapat mengelola akun.
+7. **Daftar pengguna** – tidak ada endpoint untuk mendaftar atau mengelola akun
+   lain (`GET /users`, ubah peran, hapus akun). `/users/me` hanya mengubah akun
+   pemilik token, jadi admin belum dapat mengelola akun pengguna.
 
 ## Status verifikasi
 

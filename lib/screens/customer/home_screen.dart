@@ -1,4 +1,6 @@
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -16,6 +18,7 @@ import 'cart_screen.dart';
 import 'catalog_screen.dart';
 import 'item_detail_screen.dart';
 import 'widgets/item_card.dart';
+import '../shared/profile_screen.dart';
 
 /// Layar beranda customer: sapaan, pencarian, kategori, dan rekomendasi.
 ///
@@ -30,16 +33,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   static const int _previewCount = 6;
+  static const List<String> _bannerAssets = [
+    'asset/images/onboarding/onboarding-1.jpg',
+    'asset/images/onboarding/onboarding-2.jpg',
+    'asset/images/onboarding/onboarding-3.jpg',
+  ];
 
   List<Category> _categories = const [];
   List<Item> _items = const [];
   bool _loading = true;
   String? _error;
 
+  final PageController _bannerController = PageController();
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _bannerController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -108,9 +124,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: RefreshIndicator(
+      body: CustomRefreshIndicator(
         onRefresh: _load,
-        color: AppColors.forest,
+        builder: (context, child, controller) => Stack(
+          children: [
+            child,
+            Positioned(
+              top: controller.value * 60,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: AppColors.forest,
+                    value: controller.isLoading
+                        ? null
+                        : controller.value.clamp(0.0, 1.0),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
@@ -124,15 +162,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Siap berpetualang?',
                 subtitle: 'Perlengkapan camping siap menemani perjalananmu.',
                 actions: [
-                  // Logo menandai merek, keranjang selalu di kanan. Profil
-                  // tidak diulang karena sudah ada di bottom navigation.
-                  const CakuLogoMark(size: 34),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const CakuLogoMark(size: 28),
+                  ),
                   const Spacer(),
                   ForestHeaderAction(
                     icon: Icons.shopping_cart_outlined,
                     tooltip: 'Keranjang',
                     badgeCount: cart.totalQuantity,
                     onTap: _openCart,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  ForestHeaderAction(
+                    icon: Icons.person_outline_rounded,
+                    tooltip: 'Profil',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ProfileScreen(),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -142,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 AppSpacing.screen,
                 AppSpacing.xl,
                 AppSpacing.screen,
-                AppSpacing.xxl,
+                AppSpacing.lg,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,7 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     readOnly: true,
                     onTap: () => _openCatalog(autofocus: true),
                   ),
-                  const SizedBox(height: AppSpacing.xxl),
+                  const SizedBox(height: AppSpacing.lg),
+                  _BannerCarousel(controller: _bannerController, assets: _bannerAssets),
+                  const SizedBox(height: AppSpacing.lg),
                   if (_categories.isNotEmpty) ...[
                     const SectionHeader(title: 'Kategori'),
                     const SizedBox(height: AppSpacing.md),
@@ -160,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: EdgeInsets.zero,
                       onSelect: (id) => _openCatalog(categoryId: id),
                     ),
-                    const SizedBox(height: AppSpacing.xxl),
+                    const SizedBox(height: AppSpacing.lg),
                   ],
                   SectionHeader(
                     title: 'Rekomendasi',
@@ -210,6 +268,76 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => _openDetail(item),
         );
       },
+    );
+  }
+}
+
+
+/// Carousel banner di beranda dengan indikator halaman halus.
+class _BannerCarousel extends StatelessWidget {
+  const _BannerCarousel({required this.controller, required this.assets});
+
+  final PageController controller;
+  final List<String> assets;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 130,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: assets.length,
+            itemBuilder: (context, index) => ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    assets[index],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                  Positioned(
+                    left: AppSpacing.md,
+                    bottom: AppSpacing.md,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.forest.withValues(alpha: 0.78),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: const Text(
+                        'Paket Camping Akhir Pekan — Diskon 15%',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SmoothPageIndicator(
+          controller: controller,
+          count: assets.length,
+          effect: const WormEffect(
+            dotHeight: 8,
+            dotWidth: 8,
+            activeDotColor: AppColors.forest,
+            dotColor: AppColors.border,
+          ),
+        ),
+      ],
     );
   }
 }

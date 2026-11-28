@@ -36,6 +36,15 @@ class AdminApplicationService {
     return response.dataList;
   }
 
+  /// Jumlah pengajuan yang masih menunggu ditinjau, untuk lencana dashboard.
+  Future<int> pendingCount() async {
+    final response = await _client.get(
+      '/admin-applications',
+      query: {'status': 'pending', 'page': '1', 'limit': '1'},
+    );
+    return response.pagination?.total ?? response.dataList.length;
+  }
+
   Future<Map<String, dynamic>> detail(int id) async {
     final response = await _client.get('/admin-applications/$id');
     return response.dataMap;

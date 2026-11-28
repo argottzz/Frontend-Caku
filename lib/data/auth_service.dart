@@ -33,12 +33,14 @@ class AuthService {
     required String nama,
     required String email,
     required String password,
+    required String phoneNumber,
   }) async {
     final response = await _client.post(
       '/auth/register',
       body: {
         'nama': nama.trim(),
         'email': email.trim().toLowerCase(),
+        'phone_number': phoneNumber.trim(),
         'password': password,
       },
       auth: false,
@@ -53,5 +55,21 @@ class AuthService {
   Future<User> me() async {
     final response = await _client.get('/auth/me');
     return User.fromJson(response.dataMap);
+  }
+
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await _client.patch(
+      '/auth/change-password',
+      body: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword,
+      },
+    );
+    return response.message;
   }
 }

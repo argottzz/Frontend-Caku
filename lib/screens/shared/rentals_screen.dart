@@ -1,3 +1,4 @@
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
@@ -122,9 +123,31 @@ class _RentalsScreenState extends State<RentalsScreen> {
         onCartTap: widget.adminMode ? null : _openCart,
         cartBadge: widget.adminMode ? 0 : CartScope.of(context).totalQuantity,
       ),
-      body: RefreshIndicator(
+      body: CustomRefreshIndicator(
         onRefresh: () => _load(reset: true),
-        color: AppColors.forest,
+        builder: (context, child, controller) => Stack(
+          children: [
+            child,
+            Positioned(
+              top: controller.value * 60,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: AppColors.forest,
+                    value: controller.isLoading
+                        ? null
+                        : controller.value.clamp(0.0, 1.0),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.zero,

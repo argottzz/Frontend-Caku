@@ -53,6 +53,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(_grid(width));
+       await tester.pump(const Duration(milliseconds: 400));
 
       expect(tester.takeException(), isNull);
     });
@@ -67,6 +68,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(_grid(360, textScale: 1.6));
+     await tester.pump(const Duration(milliseconds: 400));
 
     expect(tester.takeException(), isNull);
   });
