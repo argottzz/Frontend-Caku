@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -10,7 +11,9 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/qr_download.dart';
 import '../../models/rental.dart';
+import '../../state/app_scope.dart';
 import '../../widgets/app_buttons.dart';
+import 'payment_success_screen.dart';
 import '../../widgets/app_snack.dart';
 import '../../widgets/caku_app_bar.dart';
 import '../../widgets/layout.dart';
@@ -33,6 +36,52 @@ class PaymentQrScreen extends StatefulWidget {
 class _PaymentQrScreenState extends State<PaymentQrScreen> {
   final GlobalKey _qrKey = GlobalKey();
   bool _saving = false;
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.rental.paidAt != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (_) => const PaymentSuccessScreen(),
+          ),
+        );
+      });
+      return;
+    }
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _checkPayment();
+    });
+  }
+
+  Future<void> _checkPayment() async {
+    if (!mounted) return;
+    try {
+      final rental = await AppScope.read(context).rentals.detail(widget.rental.id);
+      if (!mounted) return;
+      if (rental.paidAt != null ||
+          rental.status == RentalStatus.pending) {
+        _pollTimer?.cancel();
+        _pollTimer = null;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (_) => const PaymentSuccessScreen(),
+          ),
+        );
+      }
+    } catch (_) {
+      // Abaikan error polling; coba lagi pada tick berikutnya.
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
 
   String get _qrData =>
       widget.rental.qrCodePayload ??
