@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'token_backup_mobile.dart'
+    if (dart.library.html) 'token_backup_web.dart';
 
 /// Penyimpanan token JWT.
 ///
@@ -38,8 +38,7 @@ class TokenStorage {
           _memoryToken = token;
           return token;
         }
-        // Cadangan berbasis berkas bila secure storage kosong.
-        final backup = await _readBackupFile();
+        final backup = await readTokenBackup();
         if (backup != null && backup.isNotEmpty) {
           _memoryToken = backup;
           return backup;
@@ -50,7 +49,7 @@ class TokenStorage {
         debugPrint('TokenStorage.read attempt $attempt gagal: $error');
         if (attempt == 1) {
           _useMemoryFallback = true;
-          final backup = await _readBackupFile();
+          final backup = await readTokenBackup();
           if (backup != null && backup.isNotEmpty) {
             _memoryToken = backup;
             return backup;
@@ -79,8 +78,7 @@ class TokenStorage {
         }
       }
     }
-    // Cadangan berbasis berkas agar sesi tetap ada bila secure storage gagal.
-    await _writeBackupFile(token);
+    await writeTokenBackup(token);
   }
 
   Future<void> clear() async {
@@ -93,7 +91,7 @@ class TokenStorage {
         _useMemoryFallback = true;
       }
     }
-    await _deleteBackupFile();
+    await deleteTokenBackup();
   }
 
   /// Membaca flag apakah onboarding sudah pernah dilihat.
@@ -145,49 +143,6 @@ class TokenStorage {
     } catch (error) {
       debugPrint('TokenStorage.clearOnboardingSeen gagal: $error');
       _useMemoryFallback = true;
-    }
-  }
-
-  Future<File?> _backupFile(String name) async {
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      return File('${dir.path}/$name');
-    } catch (error) {
-      debugPrint('TokenStorage: gagal resolve backup dir: $error');
-      return null;
-    }
-  }
-
-  Future<String?> _readBackupFile() async {
-    final file = await _backupFile('caku_token.txt');
-    if (file == null) return null;
-    try {
-      if (!await file.exists()) return null;
-      final value = await file.readAsString();
-      return value.trim().isEmpty ? null : value.trim();
-    } catch (error) {
-      debugPrint('TokenStorage: gagal baca backup: $error');
-      return null;
-    }
-  }
-
-  Future<void> _writeBackupFile(String value) async {
-    final file = await _backupFile('caku_token.txt');
-    if (file == null) return;
-    try {
-      await file.writeAsString(value, flush: true);
-    } catch (error) {
-      debugPrint('TokenStorage: gagal tulis backup: $error');
-    }
-  }
-
-  Future<void> _deleteBackupFile() async {
-    final file = await _backupFile('caku_token.txt');
-    if (file == null) return;
-    try {
-      if (await file.exists()) await file.delete();
-    } catch (error) {
-      debugPrint('TokenStorage: gagal hapus backup: $error');
     }
   }
 
