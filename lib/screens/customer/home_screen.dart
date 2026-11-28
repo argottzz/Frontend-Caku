@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     actionLabel: 'Lihat semua',
                     onAction: () => _openCatalog(),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                   const SizedBox(height: AppSpacing.sm),
                   _buildGrid(),
                 ],
               ),
