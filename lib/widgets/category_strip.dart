@@ -48,7 +48,7 @@ class CategoryStrip extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth - padding.horizontal;
         final tileWidth = width / items.length;
-        if (tileWidth >= 48) {
+        if (tileWidth >= 64) {
           return Padding(
             padding: padding,
             child: Row(
