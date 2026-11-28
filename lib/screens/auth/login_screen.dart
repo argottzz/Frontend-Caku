@@ -11,6 +11,8 @@ import '../../widgets/form_widgets.dart';
 import '../../widgets/state_views.dart';
 import 'auth_shell.dart';
 import 'register_screen.dart';
+import '../admin/admin_shell.dart';
+import '../customer/customer_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,10 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
     try {
-      await AuthScope.read(
+      final user = await AuthScope.read(
         context,
       ).login(email: _emailController.text, password: _passwordController.text);
-      // RootGate mengganti layar setelah status autentikasi berubah.
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => user.isAdmin
+              ? const AdminShell()
+              : const CustomerShell(),
+        ),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
